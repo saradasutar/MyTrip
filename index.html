@@ -1,108 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="O/o ADG(B) monthly report submission portal" />
-  <title>ADG(B) Reports Portal</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f27d63">
+  <title>MyTrip Shared Planner</title>
+  <meta name="description" content="A shared trip planner with itinerary, Google Maps, expenses and print reports.">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="emblem" aria-hidden="true">CPWD</div>
-      <div>
-        <h1>O/o ADG(B) Reports Portal</h1>
-        <p>Online report submission dashboard</p>
+  <section class="access-screen" id="accessScreen">
+    <div class="access-art"><div class="brand"><i>↗</i> mytrip</div><div class="access-copy"><span>PLAN · SHARE · GO</span><h1>One happy place for the whole trip.</h1><p>Choose places together, build a day-by-day plan, track every rupee and print a clean trip book.</p><div class="feature-chips"><b>⌖ Google Maps</b><b>♙ Shared access</b><b>₹ Expenses</b><b>▤ Print reports</b></div></div></div>
+    <div class="access-panel">
+      <div class="access-card">
+        <div class="mobile-logo"><i>↗</i> mytrip</div>
+        <span class="kicker">WELCOME TO MYTRIP</span>
+        <h2>Open a shared trip</h2>
+        <p>Enter a trip code with its Traveller PIN, or use your global Administrator password/PIN for any trip.</p>
+        <form id="joinForm">
+          <label>Trip code<input name="tripId" id="joinTripId" placeholder="e.g. GOA26" autocomplete="off" required></label>
+          <label>Administrator password/PIN or Traveller PIN<input name="pin" type="password" maxlength="64" placeholder="Enter your access code" required></label>
+          <button class="primary" type="submit">Open trip →</button>
+        </form>
+        <div class="or"><span>or</span></div>
+        <button class="admin-all-button" id="showAllTripsButton" type="button">◆ Administrator · View all trips</button>
+        <div class="demo-choice"><button class="demo-button" id="adminDemoButton" type="button">Administrator demo</button><button class="demo-button" id="travellerDemoButton" type="button">Traveller demo</button></div>
+        <button class="text-button" id="showCreateButton" type="button">＋ Create a new trip</button>
+        <div class="backend-status" id="backendStatus"><span><i></i><b>Google backend not connected</b></span><button id="connectBackendButton" type="button">Connect</button></div>
+        <p class="access-note">One Administrator password/PIN opens every trip. Each trip has its own Traveller PIN.</p>
       </div>
     </div>
-    <button id="refreshBtn" class="secondary-btn" type="button">↻ Refresh</button>
-  </header>
+  </section>
 
-  <main class="container">
-    <section class="summary-grid" aria-label="Submission summary">
-      <article class="summary-card">
-        <span>Total Subjects</span>
-        <strong id="totalSubjects">—</strong>
-      </article>
-      <article class="summary-card">
-        <span>Submitted</span>
-        <strong id="submittedCount">—</strong>
-      </article>
-      <article class="summary-card">
-        <span>Pending</span>
-        <strong id="pendingCount">—</strong>
-      </article>
-      <article class="summary-card">
-        <span>Last Updated</span>
-        <strong id="lastUpdated">—</strong>
-      </article>
-    </section>
+  <section class="dashboard hidden" id="dashboard">
+    <aside class="sidebar">
+      <a class="brand" href="#"><i>↗</i> mytrip</a>
+      <nav id="mainNav">
+        <button data-tab="overview" class="active"><i>⌂</i><span>Overview</span></button>
+        <button data-tab="itinerary"><i>▦</i><span>Itinerary</span></button>
+        <button data-tab="places"><i>⌖</i><span>Places & Map</span></button>
+        <button data-tab="expenses"><i>₹</i><span>Expenses</span></button>
+        <button data-tab="people"><i>♙</i><span>Travellers</span></button>
+        <button data-tab="print"><i>▤</i><span>Print & Export</span></button>
+      </nav>
+      <div class="current-trip"><span class="kicker">CURRENT TRIP</span><div><i>🌴</i><span><b id="sideTripName">Goa escape</b><small id="sideTripDates">19–23 Nov 2026</small></span></div></div>
+      <div class="user"><span>SS</span><div><b id="currentUser">Traveller</b><small id="currentRoleLabel">Traveller access</small></div><button id="leaveTrip" title="Close trip">↪</button></div>
+    </aside>
 
-    <section class="notice">
-      <strong>Instructions:</strong>
-      Select the relevant office and report subject, upload one PDF file, and enter the portal access code.
-      Maximum file size: <span id="maxSizeText">8 MB</span>.
-    </section>
-
-    <section class="dashboard-card">
-      <div class="dashboard-heading">
-        <div>
-          <h2>Report Submission Status</h2>
-          <p>Subjects are shown in rows and sub-offices in columns.</p>
-        </div>
-        <span id="loadingBadge" class="badge">Loading…</span>
+    <main class="workspace">
+      <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><button class="all-trips" id="allTripsButton">◆ All trips</button><span class="access-badge" id="accessBadge">ADMINISTRATOR</span><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
+      <div class="content">
+        <section class="trip-heading"><div><span class="trip-status">● UPCOMING TRIP</span><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
+        <div id="view"></div>
       </div>
+    </main>
+  </section>
 
-      <div class="table-wrap">
-        <table id="reportTable">
-          <thead>
-            <tr id="tableHeader">
-              <th>Subject</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td class="loading-cell">Loading portal data…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+  <div class="modal hidden" id="modal" role="presentation"><section role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header><div><span class="kicker">MYTRIP</span><h2 id="modalTitle">Add</h2></div><button id="closeModal" aria-label="Close">×</button></header><div id="modalBody"></div></section></div>
+  <div class="toast hidden" id="toast" role="status"></div>
+  <section class="print-area" id="printArea"></section>
 
-    <p class="footer-note">
-      Files are stored in the authorised Google Drive folder and recorded in the Google Sheet.
-    </p>
-  </main>
-
-  <dialog id="uploadDialog">
-    <form id="uploadForm" method="dialog">
-      <div class="dialog-header">
-        <div>
-          <h3>Upload PDF Report</h3>
-          <p id="selectionText"></p>
-        </div>
-        <button id="closeDialogBtn" class="icon-btn" type="button" aria-label="Close">×</button>
-      </div>
-
-      <input id="selectedSubject" type="hidden" />
-      <input id="selectedOffice" type="hidden" />
-
-      <label for="pdfFile">PDF file</label>
-      <input id="pdfFile" name="pdfFile" type="file" accept="application/pdf,.pdf" required />
-
-      <label for="accessCode">Portal access code</label>
-      <input id="accessCode" name="accessCode" type="password" autocomplete="off"
-             placeholder="Enter the code supplied by ADG(B)" />
-
-      <div id="fileDetails" class="file-details" hidden></div>
-      <div id="uploadMessage" class="message" hidden></div>
-
-      <div class="dialog-actions">
-        <button id="cancelBtn" class="secondary-btn" type="button">Cancel</button>
-        <button id="submitBtn" class="primary-btn" type="submit">Upload Report</button>
-      </div>
-    </form>
-  </dialog>
-
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
