@@ -152,6 +152,8 @@ The traveller clicks **Traveller · View my trips** on the opening screen. One l
 
 For an existing trip member without personal access, click **Give personal PIN** on that traveller’s card.
 
+The Administrator can click **Reset PIN** on any traveller card at any time. The newly entered PIN works immediately and the old PIN stops working.
+
 ### Disable or delete a trip
 
 - **Disable** blocks both shared Traveller PIN access and personal Traveller ID access, while preserving all trip data. The Administrator can enable it again.
