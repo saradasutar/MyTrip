@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f27d63">
+  <title>MyTrip Shared Planner</title>
+  <meta name="description" content="A shared trip planner with itinerary, Google Maps, expenses and print reports.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="access-screen" id="accessScreen">
+    <div class="access-art"><div class="brand"><i>↗</i> mytrip</div><div class="access-copy"><span>PLAN · SHARE · GO</span><h1>One happy place for the whole trip.</h1><p>Choose places together, build a day-by-day plan, track every rupee and print a clean trip book.</p><div class="feature-chips"><b>⌖ Google Maps</b><b>♙ Shared access</b><b>₹ Expenses</b><b>▤ Print reports</b></div></div></div>
+    <div class="access-panel">
+      <div class="access-card">
+        <div class="mobile-logo"><i>↗</i> mytrip</div>
+        <span class="kicker">WELCOME TO MYTRIP</span>
+        <h2>Open a shared trip</h2>
+        <p>Enter the trip code and PIN supplied by the organiser.</p>
+        <form id="joinForm">
+          <label>Trip code<input name="tripId" id="joinTripId" placeholder="e.g. GOA26" autocomplete="off" required></label>
+          <label>Access PIN<input name="pin" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits" required></label>
+          <button class="primary" type="submit">Open trip →</button>
+        </form>
+        <div class="or"><span>or</span></div>
+        <button class="demo-button" id="demoButton" type="button">Explore the working demo</button>
+        <button class="text-button" id="showCreateButton" type="button">＋ Create a new trip</button>
+        <p class="access-note">No account is required. Your organiser controls the shared PIN.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard hidden" id="dashboard">
+    <aside class="sidebar">
+      <a class="brand" href="#"><i>↗</i> mytrip</a>
+      <nav id="mainNav">
+        <button data-tab="overview" class="active"><i>⌂</i><span>Overview</span></button>
+        <button data-tab="itinerary"><i>▦</i><span>Itinerary</span></button>
+        <button data-tab="places"><i>⌖</i><span>Places & Map</span></button>
+        <button data-tab="expenses"><i>₹</i><span>Expenses</span></button>
+        <button data-tab="people"><i>♙</i><span>Travellers</span></button>
+        <button data-tab="print"><i>▤</i><span>Print & Export</span></button>
+      </nav>
+      <div class="current-trip"><span class="kicker">CURRENT TRIP</span><div><i>🌴</i><span><b id="sideTripName">Goa escape</b><small id="sideTripDates">19–23 Nov 2026</small></span></div></div>
+      <div class="user"><span>SS</span><div><b id="currentUser">Traveller</b><small>Shared trip member</small></div><button id="leaveTrip" title="Close trip">↪</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
+      <div class="content">
+        <section class="trip-heading"><div><span class="trip-status">● UPCOMING TRIP</span><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
+        <div id="view"></div>
+      </div>
+    </main>
+  </section>
+
+  <div class="modal hidden" id="modal" role="presentation"><section role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header><div><span class="kicker">MYTRIP</span><h2 id="modalTitle">Add</h2></div><button id="closeModal" aria-label="Close">×</button></header><div id="modalBody"></div></section></div>
+  <div class="toast hidden" id="toast" role="status"></div>
+  <section class="print-area" id="printArea"></section>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
