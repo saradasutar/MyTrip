@@ -15,19 +15,20 @@
       <div class="access-card">
         <div class="mobile-logo"><i>↗</i> mytrip</div>
         <span class="kicker">WELCOME TO MYTRIP</span>
-        <h2>Open a shared trip</h2>
-        <p>Enter a trip code with its Traveller PIN, or use your global Administrator password/PIN for any trip.</p>
+        <h2>Open your trips</h2>
+        <p>Use a personal Traveller ID to see every assigned trip, an Administrator PIN to manage all trips, or a shared trip code.</p>
         <form id="joinForm">
           <label>Trip code<input name="tripId" id="joinTripId" placeholder="e.g. GOA26" autocomplete="off" required></label>
           <label>Administrator password/PIN or Traveller PIN<input name="pin" type="password" maxlength="64" placeholder="Enter your access code" required></label>
-          <button class="primary" type="submit">Open trip →</button>
+          <button class="primary" type="submit">Open one trip →</button>
         </form>
         <div class="or"><span>or</span></div>
+        <button class="traveller-all-button" id="showMyTripsButton" type="button">♙ Traveller · View my trips</button>
         <button class="admin-all-button" id="showAllTripsButton" type="button">◆ Administrator · View all trips</button>
         <div class="demo-choice"><button class="demo-button" id="adminDemoButton" type="button">Administrator demo</button><button class="demo-button" id="travellerDemoButton" type="button">Traveller demo</button></div>
         <button class="text-button" id="showCreateButton" type="button">＋ Create a new trip</button>
         <div class="backend-status" id="backendStatus"><span><i></i><b>Google backend not connected</b></span><button id="connectBackendButton" type="button">Connect</button></div>
-        <p class="access-note">One Administrator password/PIN opens every trip. Each trip has its own Traveller PIN.</p>
+        <p class="access-note">One Administrator PIN opens every trip. Every named traveller can have one personal PIN for all assigned trips.</p>
       </div>
     </div>
   </section>
@@ -50,7 +51,7 @@
     <main class="workspace">
       <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><button class="all-trips" id="allTripsButton">◆ All trips</button><span class="access-badge" id="accessBadge">ADMINISTRATOR</span><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
       <div class="content">
-        <section class="trip-heading"><div><span class="trip-status">● UPCOMING TRIP</span><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
+        <section class="trip-heading"><div><div class="trip-status-row"><span class="trip-status" id="tripStatus">● UPCOMING TRIP</span><span class="trip-id-chip" id="tripIdChip">TRIP ID: GOA26</span></div><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div class="trip-heading-actions"><button class="secondary" id="editTripButton">✎ Edit</button><button class="secondary status-control" id="tripStatusButton">Disable</button><button class="danger-button" id="deleteTripButton">Delete</button><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
         <div id="view"></div>
       </div>
     </main>

@@ -19,13 +19,13 @@ You will do everything in your web browser. Nothing needs to be installed on you
 4. If Google shows “This app isn’t verified”, click **Advanced**, then **Go to MyTrip Backend (unsafe)**. This warning appears because this is your own private script, not a published Google app.
 5. Wait until the execution says **Completed**.
 
-The script automatically creates a spreadsheet named **MyTrip Dashboard Data** with separate tabs for Trips, Members, Places, Itinerary, Expenses and Activity.
+The script automatically creates a spreadsheet named **MyTrip Dashboard Data** with tabs for Trips, Members, TravellerAccounts, TripAssignments, Places, Itinerary, Expenses and Activity.
 
 ## Part 2 — Deploy the Google Web App
 
 1. In Apps Script, click **Deploy** → **New deployment**.
 2. Click the gear icon beside “Select type” and choose **Web app**.
-3. Description: enter `MyTrip version 3`.
+3. Description: enter `MyTrip version 4.1`.
 4. Execute as: choose **Me**.
 5. Who has access: choose **Anyone**.
 6. Click **Deploy** and approve access if requested.
@@ -106,14 +106,24 @@ Use the same global Administrator password/PIN whenever you create another trip.
 | --- | :---: | :---: |
 | View and switch between all trips | ✓ | — |
 | View the dashboard, Google Maps and print reports | ✓ | ✓ |
-| Add plans and expenses | ✓ | ✓ |
-| Save or remove places | ✓ | — |
-| Add or remove travellers | ✓ | — |
+| Add and edit plans, places and expenses | ✓ | ✓ |
+| Create Traveller IDs and assign trips | ✓ | — |
+| Edit, disable/enable or delete trips | ✓ | — |
 | Delete records | ✓ | — |
 | Change trip settings and global Administrator access | ✓ | — |
 | Change this trip’s Traveller PIN | ✓ | — |
 
 Keep the global Administrator password/PIN with the organiser. Do not send it in a group invite. Send only the Traveller PIN belonging to that specific trip.
+
+### If the Administrator PIN is forgotten
+
+`MYTRIP_NEW_ADMIN_SECRET` is a temporary Apps Script **Script Property** used only for recovery. It is not the normal login PIN and you should not add it unless you need to reset a forgotten Administrator PIN.
+
+1. In Apps Script, open **Project Settings** → **Script Properties**.
+2. Add property `MYTRIP_NEW_ADMIN_SECRET` with the new 6–64 character Administrator password/PIN as its value.
+3. In the editor, run `resetMyTripAdministratorPin()` once.
+
+The function stores only the new SHA-256 hash and immediately deletes the temporary plain-text property. You do not need to redeploy after this recovery action.
 
 ### View all trips as Administrator
 
@@ -122,6 +132,27 @@ Keep the global Administrator password/PIN with the organiser. Do not send it in
 3. Select any trip and click **Open**.
 
 Travellers cannot open this list. A Traveller PIN works only with its own trip code.
+
+### Create a Traveller ID and assign trips
+
+1. Open **Administrator · View all trips** with the one global Administrator PIN.
+2. Click **Traveller accounts** → **New traveller**.
+3. Enter the traveller’s name and a 4–8 digit personal PIN. A Traveller ID is generated automatically, or you can choose one.
+4. Click **Assign trips** beside that traveller and select one or many trips.
+5. Give the Traveller ID and personal PIN privately to that person.
+
+The traveller clicks **Traveller · View my trips** on the opening screen. One login shows every active trip assigned to that Traveller ID.
+
+### Assign multiple travellers to one trip
+
+1. Open the Administrator **All trips** screen.
+2. Click **Travellers** on the relevant trip card.
+3. Select all traveller accounts that should share the trip, then click **Save assignments**.
+
+### Disable or delete a trip
+
+- **Disable** blocks both shared Traveller PIN access and personal Traveller ID access, while preserving all trip data. The Administrator can enable it again.
+- **Delete** permanently removes the trip and all its plans, places, expenses, members and assignments. The dashboard requires the exact Trip ID as confirmation.
 
 ## How to use the dashboard
 
@@ -169,10 +200,10 @@ Upload the changed file to the same GitHub repository and commit it. GitHub Page
 
 Normally the `/exec` URL remains the same, so `config.js` does not need to be changed.
 
-### Upgrading an existing MyTrip version 1 or 2 installation
+### Upgrading an existing MyTrip version 1, 2 or 3 installation
 
 1. Replace your existing Apps Script code with the new `backend/Code.gs` and click **Save**.
-2. Select **setupMyTrip** in the function list and click **Run** once. It adds the two new security columns without deleting existing trips, plans or expenses.
+2. Select **setupMyTrip** in the function list and click **Run** once. It adds the v4 traveller-account, assignment and trip-status columns/tabs without deleting existing trips, plans or expenses.
 3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
 4. Under Version, choose **New version**, then click **Deploy**.
 5. Open any existing trip using its old Administrator PIN. On the first successful Administrator login, MyTrip safely adopts that PIN as the global Administrator access for all trips.
@@ -203,13 +234,13 @@ Check the trip code and its Traveller PIN with the organiser. Administrators sho
 
 ### “Choose a PIN containing 4 to 8 digits” after entering two valid PINs
 
-That exact message comes from the old MyTrip version 1 Google backend, which accepts only one PIN. The new webpage requires backend version 3 for the global Administrator password/PIN and the separate Traveller PIN.
+That exact message comes from the old MyTrip version 1 Google backend, which accepts only one PIN. The new webpage requires backend version 4.1 for global Administrator access, personal Traveller IDs, trip status controls and separate trip PINs.
 
-1. Replace the complete Apps Script `Code.gs` with the supplied version 3 file and click **Save**.
+1. Replace the complete Apps Script `Code.gs` with the supplied version 4.1 file and click **Save**.
 2. Select `setupMyTrip` and click **Run** once.
 3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
 4. Under **Version**, choose **New version**, then click **Deploy**.
-5. Return to MyTrip and perform a hard refresh. The connection box should say **Google backend connected · v3.0.0** before creating the trip.
+5. Return to MyTrip and perform a hard refresh. The connection box should say **Google backend connected · v4.1.0** before creating or assigning trips.
 
 Saving `Code.gs` alone does not update the public `/exec` Web App. The **New version** deployment step is essential.
 
