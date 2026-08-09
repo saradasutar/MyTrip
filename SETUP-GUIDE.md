@@ -25,7 +25,7 @@ The script automatically creates a spreadsheet named **MyTrip Dashboard Data** w
 
 1. In Apps Script, click **Deploy** → **New deployment**.
 2. Click the gear icon beside “Select type” and choose **Web app**.
-3. Description: enter `MyTrip version 4.1`.
+3. Description: enter `MyTrip version 4.2`.
 4. Execute as: choose **Me**.
 5. Who has access: choose **Anyone**.
 6. Click **Deploy** and approve access if requested.
@@ -136,9 +136,9 @@ Travellers cannot open this list. A Traveller PIN works only with its own trip c
 ### Create a Traveller ID and assign trips
 
 1. Open **Administrator · View all trips** with the one global Administrator PIN.
-2. Click **Traveller accounts** → **New traveller**.
-3. Enter the traveller’s name and a 4–8 digit personal PIN. A Traveller ID is generated automatically, or you can choose one.
-4. Click **Assign trips** beside that traveller and select one or many trips.
+2. Click **Traveller profiles** → **Add traveller**.
+3. Enter the traveller’s name, contact details, notes and a 4–8 digit personal PIN. A Traveller ID is generated automatically, or you can choose one.
+4. Save the profile without assigning any trip, or click **Assign trips** later and select one or many trips.
 5. Give the Traveller ID and personal PIN privately to that person.
 
 The traveller clicks **Traveller · View my trips** on the opening screen. One login shows every active trip assigned to that Traveller ID.
@@ -234,13 +234,13 @@ Check the trip code and its Traveller PIN with the organiser. Administrators sho
 
 ### “Choose a PIN containing 4 to 8 digits” after entering two valid PINs
 
-That exact message comes from the old MyTrip version 1 Google backend, which accepts only one PIN. The new webpage requires backend version 4.1 for global Administrator access, personal Traveller IDs, trip status controls and separate trip PINs.
+That exact message comes from the old MyTrip version 1 Google backend, which accepts only one PIN. The new webpage requires backend version 4.2 for global Administrator access, independent traveller profiles, trip status controls and separate trip PINs.
 
-1. Replace the complete Apps Script `Code.gs` with the supplied version 4.1 file and click **Save**.
+1. Replace the complete Apps Script `Code.gs` with the supplied version 4.2 file and click **Save**.
 2. Select `setupMyTrip` and click **Run** once.
 3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
 4. Under **Version**, choose **New version**, then click **Deploy**.
-5. Return to MyTrip and perform a hard refresh. The connection box should say **Google backend connected · v4.1.0** before creating or assigning trips.
+5. Return to MyTrip and perform a hard refresh. The connection box should say **Google backend connected · v4.2.0** before creating or assigning trips.
 
 Saving `Code.gs` alone does not update the public `/exec` Web App. The **New version** deployment step is essential.
 

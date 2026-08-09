@@ -3,7 +3,7 @@
 
   const config = window.MYTRIP_CONFIG || {};
   const apiStorageKey = "mytrip_google_backend_url";
-  const requiredBackendVersion = "4.1.0";
+  const requiredBackendVersion = "4.2.0";
   const validApiUrl = (value) => /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(value || "").trim());
   function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch { return ""; } }
   function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch {} }
@@ -56,9 +56,9 @@
   ];
   const demoTraveller = { travellerId: "ANITA-101", name: "Anita", active: true };
   const demoTravellerAccounts = [
-    { travellerId: "ANITA-101", name: "Anita", active: true, tripCount: 2, tripIds: ["GOA26", "KER27"] },
-    { travellerId: "ROHAN-202", name: "Rohan", active: true, tripCount: 1, tripIds: ["GOA26"] },
-    { travellerId: "MEERA-303", name: "Meera", active: false, tripCount: 1, tripIds: ["GOA26"] }
+    { travellerId: "ANITA-101", name: "Anita", email: "anita@example.com", phone: "+91 98765 43210", city: "Bengaluru", emergencyContact: "Ravi · +91 90000 10001", notes: "Vegetarian meals", active: true, tripCount: 2, tripIds: ["GOA26", "KER27"] },
+    { travellerId: "ROHAN-202", name: "Rohan", email: "rohan@example.com", phone: "+91 98765 43211", city: "Mysuru", emergencyContact: "", notes: "", active: true, tripCount: 1, tripIds: ["GOA26"] },
+    { travellerId: "MEERA-303", name: "Meera", email: "", phone: "+91 98765 43212", city: "Bengaluru", emergencyContact: "", notes: "", active: false, tripCount: 1, tripIds: ["GOA26"] }
   ];
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -142,14 +142,14 @@
 
   function hydrateShell() {
     const { trip, members } = state.data;
-    $("#tripTitle").textContent = `${trip.destination || trip.name}, here we come! ☀`;
+    $("#tripTitle").textContent = `${trip.destination || trip.name}, here we come!`;
     $("#tripMeta").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "long", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "long", year: "numeric" })} · ${nights()} nights · ${members.length} travellers`;
-    $("#tripIdChip").textContent = `TRIP ID: ${trip.tripId}`;
+    $("#tripIdChip").innerHTML = `<small>TRIP ID</small><strong>${esc(trip.tripId)}</strong>`;
     const enabled = trip.enabled !== false && String(trip.enabled).toUpperCase() !== "FALSE";
     $("#tripStatus").textContent = enabled ? "● ACTIVE TRIP" : "● DISABLED TRIP";
     $("#tripStatus").classList.toggle("disabled", !enabled);
     $("#tripStatusButton").textContent = enabled ? "Disable" : "Enable";
-    $("#sideTripName").textContent = trip.name; $("#sideTripDates").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "short" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}`;
+    $("#sideTripName").textContent = trip.name; $("#sideTripDates").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "short" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}`; $("#sideTripCode").textContent = `TRIP ID · ${trip.tripId}`;
     $("#currentUser").textContent = state.currentUser;
     $("#currentRoleLabel").textContent = isAdmin() ? "Global Administrator" : (state.travellerId ? `Traveller ID: ${state.travellerId}` : "Shared trip access");
     $("#accessBadge").textContent = isAdmin() ? "ADMINISTRATOR" : "TRAVELLER";
@@ -248,7 +248,7 @@
   }
 
   function showBackendSetup(afterConnect) {
-    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>MyTrip backend version 4.1 required</b><p>Replace your Apps Script <code>Code.gs</code>, run <code>setupMyTrip()</code>, and deploy a <b>New version</b>. Version 4.1 adds personal Traveller IDs, multi-trip assignments and enforced trip status controls.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection and backend version are checked before they are saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test version 4.1 & connect</button></div></form>`);
+    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>MyTrip backend version 4.2 required</b><p>Replace your Apps Script <code>Code.gs</code>, run <code>setupMyTrip()</code>, and deploy a <b>New version</b>. Version 4.2 adds independent traveller profiles and detailed contact information.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection and backend version are checked before they are saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test version 4.2 & connect</button></div></form>`);
     const form = $("#backendForm");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -264,7 +264,7 @@
         backendState = error.code === "BACKEND_UPGRADE_REQUIRED" ? "outdated" : "error";
         updateBackendStatus();
         toast(error.code === "BACKEND_UPGRADE_REQUIRED" ? error.message : `Could not connect: ${error.message}`, true);
-        submit.disabled = false; submit.textContent = "Test version 4.1 & connect";
+        submit.disabled = false; submit.textContent = "Test version 4.2 & connect";
       }
     });
     $('[data-cancel]').addEventListener("click", closeModal);
@@ -288,7 +288,7 @@
 
   function renderAllTrips(trips, administratorSecret, demoMode) {
     const items = trips || [];
-    showModal("Administrator · All trips", `<div class="all-trips-modal"><div class="all-trips-summary"><span><small>ADMINISTRATOR LIBRARY</small><b>${items.length} ${items.length === 1 ? "trip" : "trips"}</b></span><span class="summary-actions"><button id="manageTravellerAccounts" class="secondary-action" type="button">♙ Traveller accounts</button><button id="createFromTrips" type="button">＋ Create trip</button></span></div><div class="trip-library admin-library">${items.map((trip) => `<article class="trip-library-card ${tripEnabled(trip) ? "" : "disabled-trip"}"><i>⌖</i><div class="trip-card-copy"><span class="trip-code">TRIP ID · ${esc(trip.tripId)}</span><h3>${esc(trip.name)}</h3><p>${esc(trip.destination)} · ${displayDate(trip.startDate, { day: "numeric", month: "short", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}</p><small>Budget ${money.format(Number(trip.budget || 0))} · Spent ${money.format(Number(trip.spent || 0))} · Organiser ${esc(trip.createdBy || "—")}</small><small>${Number(trip.travellerCount || 0)} members · ${Number(trip.assignedTravellerCount || 0)} assigned accounts${trip.updatedAt ? ` · Updated ${displayDate(String(trip.updatedAt).slice(0, 10))}` : ""}</small><b class="status-pill ${tripEnabled(trip) ? "active" : "disabled"}">${tripEnabled(trip) ? "ACTIVE" : "DISABLED"}</b></div><div class="trip-card-actions"><button data-open-admin-trip="${esc(trip.tripId)}" type="button">Open</button><button data-edit-listed-trip="${esc(trip.tripId)}" type="button">Edit</button><button data-assign-trip="${esc(trip.tripId)}" type="button">Travellers</button><button data-toggle-trip="${esc(trip.tripId)}" data-enabled="${tripEnabled(trip)}" type="button">${tripEnabled(trip) ? "Disable" : "Enable"}</button><button class="danger-link" data-delete-trip="${esc(trip.tripId)}" type="button">Delete</button></div></article>`).join("") || `<div class="empty-trips"><b>No trips yet</b><p>Create your first trip with this Administrator password/PIN.</p></div>`}</div><p class="global-access-note">◆ This one Administrator PIN controls every trip. Disabled trips remain visible here but cannot be opened by travellers.</p></div>`);
+    showModal("Administrator · All trips", `<div class="all-trips-modal"><div class="all-trips-summary"><span><small>ADMINISTRATOR LIBRARY</small><b>${items.length} ${items.length === 1 ? "trip" : "trips"}</b></span><span class="summary-actions"><button id="manageTravellerAccounts" class="secondary-action" type="button">♙ Traveller profiles</button><button id="createFromTrips" type="button">＋ Create trip</button></span></div><div class="trip-library admin-library">${items.map((trip) => `<article class="trip-library-card ${tripEnabled(trip) ? "" : "disabled-trip"}"><i>⌖</i><div class="trip-card-copy"><span class="trip-code">TRIP ID · ${esc(trip.tripId)}</span><h3>${esc(trip.name)}</h3><p>${esc(trip.destination)} · ${displayDate(trip.startDate, { day: "numeric", month: "short", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}</p><small>Budget ${money.format(Number(trip.budget || 0))} · Spent ${money.format(Number(trip.spent || 0))} · Organiser ${esc(trip.createdBy || "—")}</small><small>${Number(trip.travellerCount || 0)} members · ${Number(trip.assignedTravellerCount || 0)} assigned profiles${trip.updatedAt ? ` · Updated ${displayDate(String(trip.updatedAt).slice(0, 10))}` : ""}</small><b class="status-pill ${tripEnabled(trip) ? "active" : "disabled"}">${tripEnabled(trip) ? "ACTIVE" : "DISABLED"}</b></div><div class="trip-card-actions"><button data-open-admin-trip="${esc(trip.tripId)}" type="button">Open</button><button data-edit-listed-trip="${esc(trip.tripId)}" type="button">Edit</button><button data-assign-trip="${esc(trip.tripId)}" type="button">Travellers</button><button data-toggle-trip="${esc(trip.tripId)}" data-enabled="${tripEnabled(trip)}" type="button">${tripEnabled(trip) ? "Disable" : "Enable"}</button><button class="danger-link" data-delete-trip="${esc(trip.tripId)}" type="button">Delete</button></div></article>`).join("") || `<div class="empty-trips"><b>No trips yet</b><p>Create your first trip with this Administrator password/PIN.</p></div>`}</div><p class="global-access-note">◆ This one Administrator PIN controls every trip. Traveller profiles can exist without any trip assignment.</p></div>`);
     $("#createFromTrips").addEventListener("click", () => { closeModal(); showCreateTrip(); });
     $("#manageTravellerAccounts").addEventListener("click", () => loadTravellerAccounts(administratorSecret, items, demoMode));
     $$('[data-open-admin-trip]').forEach((button) => button.addEventListener("click", () => openListedTrip(button.dataset.openAdminTrip, administratorSecret, demoMode, "administrator")));
@@ -371,9 +371,10 @@
   }
 
   function renderTravellerAccounts(travellers, trips, administratorSecret, demoMode) {
-    showModal("Traveller accounts", `<div class="traveller-manager"><div class="all-trips-summary"><span><small>PERSONAL TRAVELLER ACCESS</small><b>${travellers.length} accounts</b></span><span class="summary-actions"><button id="backToAllTrips" class="secondary-action" type="button">← All trips</button><button id="createTravellerAccount" type="button">＋ New traveller</button></span></div><div class="account-list">${travellers.map((traveller) => `<article class="account-card ${traveller.active ? "" : "inactive"}"><span class="account-avatar">${esc(initials(traveller.name))}</span><div><span>${esc(traveller.travellerId)}</span><h3>${esc(traveller.name)}</h3><p>${Number(traveller.tripCount || 0)} assigned trips · ${traveller.active ? "Active" : "Inactive"}</p><small>${(traveller.tripIds || []).map(esc).join(", ") || "No trips assigned"}</small></div><div class="account-actions"><button data-account-trips="${esc(traveller.travellerId)}">Assign trips</button><button data-reset-account="${esc(traveller.travellerId)}">Reset PIN</button><button data-toggle-account="${esc(traveller.travellerId)}" data-active="${Boolean(traveller.active)}">${traveller.active ? "Disable" : "Enable"}</button></div></article>`).join("") || `<div class="empty-trips"><b>No traveller accounts</b><p>Create a traveller, give them their Traveller ID and personal PIN, then assign trips.</p></div>`}</div></div>`);
+    showModal("Traveller profiles", `<div class="traveller-manager"><div class="all-trips-summary"><span><small>INDEPENDENT TRAVELLER DIRECTORY</small><b>${travellers.length} profiles</b></span><span class="summary-actions"><button id="backToAllTrips" class="secondary-action" type="button">← All trips</button><button id="createTravellerAccount" type="button">＋ Add traveller</button></span></div><p class="directory-note">Save traveller details now without assigning any trip. Trip assignment can be done later.</p><div class="account-list">${travellers.map((traveller) => `<article class="account-card ${traveller.active ? "" : "inactive"}"><span class="account-avatar">${esc(initials(traveller.name))}</span><div class="account-profile"><span>${esc(traveller.travellerId)}</span><h3>${esc(traveller.name)}</h3><p>${[traveller.phone, traveller.email].filter(Boolean).map(esc).join(" · ") || "Contact details not added"}</p><small>${[traveller.city, traveller.emergencyContact ? `Emergency: ${traveller.emergencyContact}` : ""].filter(Boolean).map(esc).join(" · ") || "City and emergency contact not added"}</small><div class="account-trip-status ${Number(traveller.tripCount || 0) ? "assigned" : "unassigned"}">${Number(traveller.tripCount || 0) ? `${Number(traveller.tripCount)} assigned ${Number(traveller.tripCount) === 1 ? "trip" : "trips"}: ${(traveller.tripIds || []).map(esc).join(", ")}` : "NO TRIP ASSIGNED"}</div></div><div class="account-actions"><button data-edit-account="${esc(traveller.travellerId)}">Edit details</button><button data-account-trips="${esc(traveller.travellerId)}">Assign trips</button><button data-reset-account="${esc(traveller.travellerId)}">Reset PIN</button><button data-toggle-account="${esc(traveller.travellerId)}" data-active="${Boolean(traveller.active)}">${traveller.active ? "Disable" : "Enable"}</button></div></article>`).join("") || `<div class="empty-trips"><b>No traveller profiles</b><p>Add a traveller profile now. A trip does not need to be assigned.</p></div>`}</div></div>`);
     $("#backToAllTrips").addEventListener("click", () => renderAllTrips(trips, administratorSecret, demoMode));
     $("#createTravellerAccount").addEventListener("click", () => showCreateTravellerAccount(trips, administratorSecret, demoMode));
+    $$('[data-edit-account]').forEach((button) => button.addEventListener("click", () => showEditTravellerAccount(travellers.find((item) => item.travellerId === button.dataset.editAccount), trips, administratorSecret, demoMode)));
     $$('[data-account-trips]').forEach((button) => button.addEventListener("click", () => showTravellerTripAssignments(travellers.find((item) => item.travellerId === button.dataset.accountTrips), trips, administratorSecret, demoMode)));
     $$('[data-reset-account]').forEach((button) => button.addEventListener("click", () => showResetTravellerPin(travellers.find((item) => item.travellerId === button.dataset.resetAccount), trips, administratorSecret, demoMode)));
     $$('[data-toggle-account]').forEach((button) => button.addEventListener("click", async () => {
@@ -387,14 +388,28 @@
   }
 
   function showCreateTravellerAccount(trips, administratorSecret, demoMode) {
-    showModal("Create traveller account", `<form class="modal-form" id="createTravellerAccountForm"><label>Traveller name<input name="name" maxlength="80" placeholder="e.g. Anita Sutar" required></label><label>Traveller ID <small>(optional; generated automatically if blank)</small><input name="travellerId" maxlength="30" placeholder="e.g. ANITA-101"></label><label>Personal PIN<input name="pin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label><p class="form-help">Give this Traveller ID and personal PIN privately to the traveller. You can assign one or many trips next.</p><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Create traveller</button></div></form>`);
+    showModal("Add traveller profile", `<form class="modal-form" id="createTravellerAccountForm"><div class="security-note traveller-note"><i>♙</i><p>This saves an independent traveller profile. <b>No trip will be assigned automatically.</b></p></div><div class="form-row"><label>Traveller name<input name="name" maxlength="80" placeholder="e.g. Anita Sutar" required></label><label>Traveller ID <small>(optional)</small><input name="travellerId" maxlength="30" placeholder="Generated if blank"></label></div><div class="form-row"><label>Phone<input name="phone" type="tel" maxlength="30" placeholder="e.g. +91 98765 43210"></label><label>Email<input name="email" type="email" maxlength="120" placeholder="name@example.com"></label></div><label>City or location<input name="city" maxlength="80" placeholder="e.g. Bengaluru"></label><label>Emergency contact<input name="emergencyContact" maxlength="120" placeholder="Name and phone number"></label><label>Notes<textarea name="notes" rows="3" maxlength="1000" placeholder="Food preference, accessibility requirement or other useful note"></textarea></label><label>Personal PIN<input name="pin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label><p class="form-help">After saving, the profile will show <b>No trip assigned</b>. Assign one or more trips only when required.</p><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save without trip</button></div></form>`);
     $("#createTravellerAccountForm").addEventListener("submit", async (event) => {
       event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries());
       try {
         let created;
-        if (demoMode) { created = { travellerId: String(values.travellerId || `TRV-${Math.floor(100 + Math.random() * 900)}`).toUpperCase(), name: values.name, active: true, tripCount: 0, tripIds: [] }; demoTravellerAccounts.push(created); }
+        if (demoMode) { created = { ...values, travellerId: String(values.travellerId || `TRV-${Math.floor(100 + Math.random() * 900)}`).toUpperCase(), active: true, tripCount: 0, tripIds: [] }; delete created.pin; demoTravellerAccounts.push(created); }
         else created = await api("createTravellerAccount", { pin: administratorSecret, traveller: values });
-        toast(`Traveller created · ID ${created.travellerId}`); await loadTravellerAccounts(administratorSecret, trips, demoMode);
+        toast(`Traveller profile saved without a trip · ID ${created.travellerId}`); await loadTravellerAccounts(administratorSecret, trips, demoMode);
+      } catch (error) { toast(error.message, true); }
+    });
+    $('[data-cancel]').addEventListener("click", () => loadTravellerAccounts(administratorSecret, trips, demoMode));
+  }
+
+  function showEditTravellerAccount(traveller, trips, administratorSecret, demoMode) {
+    if (!traveller) return toast("Traveller profile not found", true);
+    showModal("Edit traveller details", `<form class="modal-form" id="editTravellerAccountForm"><div class="profile-id-banner"><span>TRAVELLER ID</span><b>${esc(traveller.travellerId)}</b><small>${Number(traveller.tripCount || 0) ? `${Number(traveller.tripCount)} assigned trips` : "No trip assigned"}</small></div><label>Traveller name<input name="name" maxlength="80" value="${esc(traveller.name)}" required></label><div class="form-row"><label>Phone<input name="phone" type="tel" maxlength="30" value="${esc(traveller.phone || "")}"></label><label>Email<input name="email" type="email" maxlength="120" value="${esc(traveller.email || "")}"></label></div><label>City or location<input name="city" maxlength="80" value="${esc(traveller.city || "")}"></label><label>Emergency contact<input name="emergencyContact" maxlength="120" value="${esc(traveller.emergencyContact || "")}"></label><label>Notes<textarea name="notes" rows="3" maxlength="1000">${esc(traveller.notes || "")}</textarea></label><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save details</button></div></form>`);
+    $("#editTravellerAccountForm").addEventListener("submit", async (event) => {
+      event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+      try {
+        if (demoMode) Object.assign(traveller, values);
+        else await api("updateTravellerAccount", { pin: administratorSecret, travellerId: traveller.travellerId, traveller: values });
+        toast("Traveller details updated"); await loadTravellerAccounts(administratorSecret, trips, demoMode);
       } catch (error) { toast(error.message, true); }
     });
     $('[data-cancel]').addEventListener("click", () => loadTravellerAccounts(administratorSecret, trips, demoMode));
