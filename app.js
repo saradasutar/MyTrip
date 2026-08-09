@@ -3,10 +3,13 @@
 
   const config = window.MYTRIP_CONFIG || {};
   const apiStorageKey = "mytrip_google_backend_url";
+  const requiredBackendMajor = 3;
   const validApiUrl = (value) => /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(value || "").trim());
   function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch { return ""; } }
   function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch {} }
   let apiUrl = validApiUrl(config.API_URL) ? String(config.API_URL).trim() : (validApiUrl(readStoredApiUrl()) ? readStoredApiUrl() : "");
+  let backendState = apiUrl ? "checking" : "missing";
+  let backendVersion = "";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: config.DEFAULT_CURRENCY || "INR", maximumFractionDigits: 0 });
@@ -53,7 +56,7 @@
   ];
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
-  function toast(message, error = false) { const element = $("#toast"); element.textContent = `${error ? "!" : "✓"} ${message}`; element.style.background = error ? "#a34343" : "#17263c"; element.classList.remove("hidden"); clearTimeout(toast.timer); toast.timer = setTimeout(() => element.classList.add("hidden"), 2800); }
+  function toast(message, error = false) { const element = $("#toast"); element.textContent = `${error ? "!" : "✓"} ${message}`; element.style.background = error ? "#a34343" : "#17263c"; element.classList.remove("hidden"); clearTimeout(toast.timer); toast.timer = setTimeout(() => element.classList.add("hidden"), error ? 9000 : 2800); }
   function displayDate(date, options = { day: "2-digit", month: "short", year: "numeric" }) { if (!date) return "—"; return new Date(`${date}T12:00:00`).toLocaleDateString("en-IN", options); }
   function displayTime(value) { if (!value) return ""; const [hours, minutes] = String(value).split(":"); const date = new Date(2000, 0, 1, Number(hours), Number(minutes)); return date.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); }
   function initials(name) { return String(name || "T").split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
@@ -68,6 +71,39 @@
     const result = await response.json();
     if (!result.ok) throw new Error(result.error || "The request could not be completed.");
     return result.data;
+  }
+
+  function backendMajor(version) {
+    const major = Number.parseInt(String(version || "0").split(".")[0], 10);
+    return Number.isFinite(major) ? major : 0;
+  }
+
+  function backendUpgradeError(version) {
+    const shownVersion = version ? `version ${version}` : "an old version";
+    const error = new Error(`Your Google backend is ${shownVersion}. Replace Code.gs with MyTrip version 3, run setupMyTrip(), then deploy a New version in Apps Script.`);
+    error.code = "BACKEND_UPGRADE_REQUIRED";
+    return error;
+  }
+
+  async function verifyBackendVersion(url = apiUrl) {
+    const info = await requestAt(url, "ping");
+    backendVersion = String(info && info.version || "");
+    if (backendMajor(backendVersion) < requiredBackendMajor) throw backendUpgradeError(backendVersion);
+    return info;
+  }
+
+  async function ensureCurrentBackend() {
+    if (!apiUrlReady()) throw new Error("Connect the Google backend first.");
+    backendState = "checking"; updateBackendStatus();
+    try {
+      const info = await verifyBackendVersion();
+      backendState = "ready"; updateBackendStatus();
+      return info;
+    } catch (error) {
+      backendState = error.code === "BACKEND_UPGRADE_REQUIRED" ? "outdated" : "error";
+      updateBackendStatus();
+      throw error;
+    }
   }
 
   async function api(action, payload = {}) {
@@ -173,14 +209,22 @@
 
   function updateBackendStatus() {
     const panel = $("#backendStatus");
-    const connected = apiUrlReady();
+    const connected = backendState === "ready";
     panel.classList.toggle("connected", connected);
-    panel.querySelector("b").textContent = connected ? "Google backend connected" : "Google backend not connected";
-    panel.querySelector("button").textContent = connected ? "Change" : "Connect";
+    panel.classList.toggle("outdated", backendState === "outdated");
+    const labels = {
+      missing: "Google backend not connected",
+      checking: "Checking Google backend…",
+      ready: `Google backend connected · v${backendVersion}`,
+      outdated: `Google backend v${backendVersion || "1"} needs update`,
+      error: "Google backend connection failed"
+    };
+    panel.querySelector("b").textContent = labels[backendState] || labels.missing;
+    panel.querySelector("button").textContent = backendState === "outdated" ? "How to update" : (connected ? "Change" : "Connect");
   }
 
   function showBackendSetup(afterConnect) {
-    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>One-time connection</b><p>Deploy the supplied <code>backend/Code.gs</code> as a Google Apps Script Web App, then paste its URL ending in <code>/exec</code>.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection is checked before it is saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test & connect</button></div></form>`);
+    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>MyTrip backend version 3 required</b><p>Replace your Apps Script <code>Code.gs</code>, run <code>setupMyTrip()</code>, and deploy a <b>New version</b>. Saving the script without deploying a new version leaves the old PIN system active.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection and backend version are checked before they are saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test version 3 & connect</button></div></form>`);
     const form = $("#backendForm");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -189,11 +233,14 @@
       const submit = form.querySelector('button[type="submit"]');
       submit.disabled = true; submit.textContent = "Checking…";
       try {
-        await requestAt(candidate, "ping");
-        apiUrl = candidate; saveStoredApiUrl(candidate); updateBackendStatus(); closeModal(); toast("Google backend connected");
+        const info = await verifyBackendVersion(candidate);
+        apiUrl = candidate; backendVersion = String(info.version || ""); backendState = "ready"; saveStoredApiUrl(candidate); updateBackendStatus(); closeModal(); toast(`Google backend version ${backendVersion} connected`);
         if (typeof afterConnect === "function") afterConnect();
       } catch (error) {
-        toast(`Could not connect: ${error.message}`, true); submit.disabled = false; submit.textContent = "Test & connect";
+        backendState = error.code === "BACKEND_UPGRADE_REQUIRED" ? "outdated" : "error";
+        updateBackendStatus();
+        toast(error.code === "BACKEND_UPGRADE_REQUIRED" ? error.message : `Could not connect: ${error.message}`, true);
+        submit.disabled = false; submit.textContent = "Test version 3 & connect";
       }
     });
     $('[data-cancel]').addEventListener("click", closeModal);
@@ -220,6 +267,7 @@
 
   async function loadAllTrips(administratorSecret, demoMode) {
     try {
+      if (!demoMode) await ensureCurrentBackend();
       const trips = demoMode ? demoTrips : (await api("listTrips", { pin: administratorSecret })).trips;
       renderAllTrips(trips, administratorSecret, demoMode);
     } catch (error) { toast(error.message, true); }
@@ -322,13 +370,31 @@
     try { const data = await api("getTrip", { tripId: state.data.trip.tripId, pin: state.pin }); state.data = normalize(data); state.accessRole = data.accessRole; state.permissions = data.permissions || {}; hydrateShell(); render(); updatePrintArea(); toast("Latest trip data loaded"); } catch (error) { toast(error.message, true); }
   }
 
+  function showCreateTrip() {
+    showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><label>Global Administrator password/PIN<input name="adminPin" type="password" minlength="6" maxlength="64" autocomplete="current-password" placeholder="Same administrator access for every trip" required></label><label>Traveller PIN for this trip<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label><p class="form-help">Use your one global Administrator password/PIN. Choose a different Traveller PIN for each trip and share only that PIN.</p>${actions}</form>`);
+    $("#createTripForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+      if (values.adminPin === values.travellerPin) return toast("The Administrator secret and Traveller PIN must be different", true);
+      try {
+        await ensureCurrentBackend();
+        const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin });
+        closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`);
+      } catch (error) { toast(error.message, true); }
+    });
+    $('[data-cancel]').addEventListener("click", closeModal);
+  }
+
   $("#joinForm").addEventListener("submit", (event) => { if (!apiUrlReady()) { event.preventDefault(); event.stopImmediatePropagation(); showBackendSetup(() => $("#joinForm").requestSubmit()); } }, true);
   $("#joinForm").addEventListener("submit", async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { const trip = await api("getTrip", { tripId: String(data.get("tripId")).trim().toUpperCase(), pin: String(data.get("pin")) }); await openTrip(trip, String(data.get("pin")), false); } catch (error) { toast(error.message, true); } });
   $("#adminDemoButton").addEventListener("click", () => openTrip(demo, "654321", true, "Sarada", "administrator"));
   $("#travellerDemoButton").addEventListener("click", () => openTrip(demo, "1234", true, "Anita", "traveller"));
   $("#showAllTripsButton").addEventListener("click", showAllTrips);
-  $("#showCreateButton").addEventListener("click", (event) => { if (!apiUrlReady()) { event.stopImmediatePropagation(); showBackendSetup(() => $("#showCreateButton").click()); } }, true);
-  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><label>Global Administrator password/PIN<input name="adminPin" type="password" minlength="6" maxlength="64" autocomplete="current-password" placeholder="Same administrator access for every trip" required></label><label>Traveller PIN for this trip<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label><p class="form-help">Use your one global Administrator password/PIN. Choose a different Traveller PIN for each trip and share only that PIN.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The Administrator secret and Traveller PIN must be different", true); try { const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
+  $("#showCreateButton").addEventListener("click", async () => {
+    if (!apiUrlReady()) return showBackendSetup(() => $("#showCreateButton").click());
+    try { await ensureCurrentBackend(); showCreateTrip(); }
+    catch (error) { toast(error.message, true); showBackendSetup(() => $("#showCreateButton").click()); }
+  });
   $("#closeModal").addEventListener("click", closeModal); $("#modal").addEventListener("mousedown", (event) => { if (event.target === event.currentTarget) closeModal(); });
   $("#mainNav").addEventListener("click", (event) => { const button = event.target.closest("[data-tab]"); if (button) setTab(button.dataset.tab); });
   $("#inviteButton").addEventListener("click", showInvite); $("#allTripsButton").addEventListener("click", showAllTrips); $("#connectBackendButton").addEventListener("click", () => showBackendSetup()); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
@@ -338,5 +404,6 @@
   const invitedApi = inviteQuery.get("api");
   if (!validApiUrl(config.API_URL) && validApiUrl(invitedApi)) { apiUrl = invitedApi; saveStoredApiUrl(apiUrl); }
   updateBackendStatus();
+  if (apiUrlReady()) ensureCurrentBackend().catch(() => {});
   const invitedTrip = inviteQuery.get("trip"); if (invitedTrip) $("#joinTripId").value = invitedTrip.toUpperCase();
 })();

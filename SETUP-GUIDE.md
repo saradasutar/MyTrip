@@ -201,6 +201,18 @@ Return to Apps Script and run `setupMyTrip()` once.
 
 Check the trip code and its Traveller PIN with the organiser. Administrators should use the global Administrator password/PIN. Stored access secrets cannot be read because only their hashes are saved.
 
+### “Choose a PIN containing 4 to 8 digits” after entering two valid PINs
+
+That exact message comes from the old MyTrip version 1 Google backend, which accepts only one PIN. The new webpage requires backend version 3 for the global Administrator password/PIN and the separate Traveller PIN.
+
+1. Replace the complete Apps Script `Code.gs` with the supplied version 3 file and click **Save**.
+2. Select `setupMyTrip` and click **Run** once.
+3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
+4. Under **Version**, choose **New version**, then click **Deploy**.
+5. Return to MyTrip and perform a hard refresh. The connection box should say **Google backend connected · v3.0.0** before creating the trip.
+
+Saving `Code.gs` alone does not update the public `/exec` Web App. The **New version** deployment step is essential.
+
 ### Dashboard still shows the old version
 
 Open the page in a private/incognito window once, or do a hard refresh:

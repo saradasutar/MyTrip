@@ -13,6 +13,7 @@ MyTrip is a free shared travel planner designed for:
 - Open every trip with one global Administrator password/PIN
 - Give every trip its own separate Traveller PIN
 - View and switch between all trips from one Administrator screen
+- Verify Google backend version 3 before creating trips, avoiding misleading old-PIN errors
 - Automatic role detection with permissions enforced by the Google backend
 - In-page Google backend connection and verification for existing GitHub sites
 - Share one live trip with several people
