@@ -40,7 +40,7 @@
     ]
   };
 
-  const state = { data: null, tab: "overview", pin: "", demoMode: false, mapQuery: "Goa, India", currentUser: "Traveller" };
+  const state = { data: null, tab: "overview", pin: "", demoMode: false, mapQuery: "Goa, India", currentUser: "Traveller", accessRole: "traveller", permissions: {} };
   const labels = { overview: "Overview", itinerary: "Itinerary", places: "Places & Map", expenses: "Expenses", people: "Travellers", print: "Print & Export" };
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -65,8 +65,13 @@
     return { trip: data.trip || {}, members: data.members || [], places: data.places || [], itinerary: data.itinerary || [], expenses: (data.expenses || []).map((item) => ({ ...item, amount: Number(item.amount || 0) })) };
   }
 
-  async function openTrip(data, pin, demoMode, name) {
+  function isAdmin() { return state.accessRole === "administrator"; }
+  function canAdd(type) { return type === "plan" || type === "expense" || isAdmin(); }
+
+  async function openTrip(data, pin, demoMode, name, roleOverride) {
     state.data = normalize(clone(data)); state.pin = pin; state.demoMode = demoMode; state.currentUser = name || data.trip.createdBy || "Traveller";
+    state.accessRole = roleOverride || data.accessRole || "traveller";
+    state.permissions = data.permissions || {};
     $("#accessScreen").classList.add("hidden"); $("#dashboard").classList.remove("hidden");
     setTab("overview"); hydrateShell(); updatePrintArea();
   }
@@ -77,6 +82,11 @@
     $("#tripMeta").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "long", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "long", year: "numeric" })} · ${nights()} nights · ${members.length} travellers`;
     $("#sideTripName").textContent = trip.name; $("#sideTripDates").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "short" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}`;
     $("#currentUser").textContent = state.currentUser;
+    $("#currentRoleLabel").textContent = isAdmin() ? "Administrator access" : "Traveller access";
+    $("#accessBadge").textContent = isAdmin() ? "ADMINISTRATOR" : "TRAVELLER";
+    $("#accessBadge").classList.toggle("traveller", !isAdmin());
+    $("#inviteButton").classList.toggle("hidden", !isAdmin());
+    $("#editTripButton").classList.toggle("hidden", !isAdmin());
     $("#topAvatars").innerHTML = members.slice(0, 3).map((member) => `<span title="${esc(member.name)}">${esc(initials(member.name))}</span>`).join("") + (members.length > 3 ? `<span>+${members.length - 3}</span>` : "");
   }
 
@@ -86,8 +96,9 @@
     render(); window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function heading(kicker, title, action = "", add = "") { return `<div class="view-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2><p>${action}</p></div>${add ? `<button class="primary" data-add="${add}">＋ Add ${add}</button>` : ""}</div>`; }
+  function heading(kicker, title, action = "", add = "") { return `<div class="view-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2><p>${action}</p></div>${add && canAdd(add) ? `<button class="primary" data-add="${add}">＋ Add ${add}</button>` : ""}</div>`; }
   function panelHead(kicker, title, tab) { return `<div class="panel-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2></div>${tab ? `<button data-go="${tab}">View all →</button>` : ""}</div>`; }
+  function accessNotice() { return `<section class="permission-banner ${isAdmin() ? "admin" : "traveller"}"><i>${isAdmin() ? "◆" : "♙"}</i><div><b>${isAdmin() ? "Administrator access" : "Traveller access"}</b><p>${isAdmin() ? "PIN security, saved places, traveller management and deletion controls are unlocked." : "You can view, add plans and expenses, use maps and print. Administrative controls are locked."}</p></div>${isAdmin() ? `<button data-security>Security settings</button>` : `<span>LIMITED ACCESS</span>`}</section>`; }
 
   function renderOverview() {
     const budget = Number(state.data.trip.budget || 0), total = spent(), percent = budget ? Math.min(100, Math.round(total / budget * 100)) : 0;
@@ -101,21 +112,21 @@
 
   function renderItinerary() {
     const items = [...state.data.itinerary].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
-    return `${heading("DAY BY DAY", "Trip itinerary", "Everything the group plans appears here in time order.", "plan")}<div class="filter-row"><button class="active">All days</button>${[...new Set(items.map((item) => item.date))].map((date) => `<button>${displayDate(date, { weekday: "short", day: "numeric" })}</button>`).join("")}</div><div class="plan-list">${items.map((item) => `<article class="plan-item"><span class="date"><small>${displayDate(item.date, { weekday: "short" }).toUpperCase()}</small><b>${displayDate(item.date, { day: "2-digit" })}</b></span><time>${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}" target="_blank" rel="noreferrer">⌖ ${esc(item.place)}</a><p>${esc(item.notes || "")}</p></div><button>•••</button></article>`).join("")}</div>`;
+    return `${heading("DAY BY DAY", "Trip itinerary", "Travellers can add plans; only the administrator can edit or delete them.", "plan")}<div class="filter-row"><button class="active">All days</button>${[...new Set(items.map((item) => item.date))].map((date) => `<button>${displayDate(date, { weekday: "short", day: "numeric" })}</button>`).join("")}</div><div class="plan-list">${items.map((item) => `<article class="plan-item"><span class="date"><small>${displayDate(item.date, { weekday: "short" }).toUpperCase()}</small><b>${displayDate(item.date, { day: "2-digit" })}</b></span><time>${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}" target="_blank" rel="noreferrer">⌖ ${esc(item.place)}</a><p>${esc(item.notes || "")}</p></div>${isAdmin() ? `<button class="delete-control" data-delete data-sheet="Itinerary" data-id="${esc(item.id)}">Delete</button>` : `<span class="locked-control">🔒</span>`}</article>`).join("")}</div>`;
   }
 
   function renderPlaces() {
-    return `${heading("DISCOVER & SAVE", "Places and map", "Search or open any saved place directly in Google Maps.", "place")}<div class="map-search"><input id="mapQuery" value="${esc(state.mapQuery)}" aria-label="Search Google Maps"><button id="mapSearchButton">⌖ Search Google Maps</button></div><div class="places-layout"><div class="map-frame"><iframe title="Trip map" src="https://www.google.com/maps?q=${encodeURIComponent(state.mapQuery)}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div><div class="places-list">${state.data.places.map((place) => `<article class="place"><i class="place-icon">⌖</i><div><h3>${esc(place.name)}</h3><p>${esc(place.area)} · ${esc(place.category)}</p><small>${esc(place.plannedDay || "Unplanned")}</small></div><button data-map="${esc(`${place.name}, ${place.area}`)}">Map ↗</button></article>`).join("")}</div></div>`;
+    return `${heading("DISCOVER & SAVE", "Places and map", "Everyone can use the map; saved places are managed by the administrator.", "place")}<div class="map-search"><input id="mapQuery" value="${esc(state.mapQuery)}" aria-label="Search Google Maps"><button id="mapSearchButton">⌖ Search Google Maps</button></div><div class="places-layout"><div class="map-frame"><iframe title="Trip map" src="https://www.google.com/maps?q=${encodeURIComponent(state.mapQuery)}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div><div class="places-list">${state.data.places.map((place) => `<article class="place"><i class="place-icon">⌖</i><div><h3>${esc(place.name)}</h3><p>${esc(place.area)} · ${esc(place.category)}</p><small>${esc(place.plannedDay || "Unplanned")}</small></div><span class="row-actions"><button data-map="${esc(`${place.name}, ${place.area}`)}">Map ↗</button>${isAdmin() ? `<button class="delete-control mini" data-delete data-sheet="Places" data-id="${esc(place.id)}">×</button>` : ""}</span></article>`).join("")}</div></div>`;
   }
 
   function renderExpenses() {
     const budget = Number(state.data.trip.budget || 0), total = spent();
-    return `${heading("SHARED SPENDING", "Trip expenses", "Record who paid and keep the group budget clear.", "expense")}<section class="expense-summary"><article class="summary-card"><small>TOTAL BUDGET</small><strong>${money.format(budget)}</strong><span>Set by organiser</span></article><article class="summary-card"><small>SPENT SO FAR</small><strong>${money.format(total)}</strong><span>${budget ? Math.round(total / budget * 100) : 0}% of budget</span></article><article class="summary-card"><small>AVAILABLE</small><strong>${money.format(budget - total)}</strong><span>For the rest of the trip</span></article></section><section class="table-panel"><div class="table-headline"><div><span class="kicker">ALL ENTRIES</span><h2>Expense details</h2></div><button data-print="expenses">▤ Print expenses</button></div><div class="expense-table"><div class="expense-table-header"><span>EXPENSE</span><span>DATE</span><span>CATEGORY</span><span>PAID BY</span><span>AMOUNT</span></div>${state.data.expenses.map((expense) => `<div class="expense-row"><span><i>₹</i>${esc(expense.label)}</span><span>${displayDate(expense.date)}</span><span>${esc(expense.category)}</span><span>${esc(expense.paidBy)}</span><strong>${money.format(expense.amount)}</strong></div>`).join("")}</div></section>`;
+    return `${heading("SHARED SPENDING", "Trip expenses", "Travellers can add spending; only the administrator can edit or delete entries.", "expense")}<section class="expense-summary"><article class="summary-card"><small>TOTAL BUDGET</small><strong>${money.format(budget)}</strong><span>Set by organiser</span></article><article class="summary-card"><small>SPENT SO FAR</small><strong>${money.format(total)}</strong><span>${budget ? Math.round(total / budget * 100) : 0}% of budget</span></article><article class="summary-card"><small>AVAILABLE</small><strong>${money.format(budget - total)}</strong><span>For the rest of the trip</span></article></section><section class="table-panel"><div class="table-headline"><div><span class="kicker">ALL ENTRIES</span><h2>Expense details</h2></div><button data-print="expenses">▤ Print expenses</button></div><div class="expense-table"><div class="expense-table-header"><span>EXPENSE</span><span>DATE</span><span>CATEGORY</span><span>PAID BY</span><span>AMOUNT</span></div>${state.data.expenses.map((expense) => `<div class="expense-row"><span><i>₹</i>${esc(expense.label)}</span><span>${displayDate(expense.date)}</span><span>${esc(expense.category)}</span><span>${esc(expense.paidBy)}</span><span class="amount-cell"><strong>${money.format(expense.amount)}</strong>${isAdmin() ? `<button class="delete-control mini" data-delete data-sheet="Expenses" data-id="${esc(expense.id)}">×</button>` : ""}</span></div>`).join("")}</div></section>`;
   }
 
   function renderPeople() {
     const totals = Object.fromEntries(state.data.members.map((member) => [member.name, state.data.expenses.filter((expense) => expense.paidBy === member.name).reduce((sum, expense) => sum + Number(expense.amount), 0)]));
-    return `${heading("YOUR TRAVEL GROUP", "Travellers", `${state.data.members.length} people can view and update this shared trip.`, "traveller")}<div class="share-banner"><div><h3>Shared trip access</h3><p>Trip code <b>${esc(state.data.trip.tripId)}</b> · Protected with a group PIN</p></div><button data-invite>Copy invite link</button></div><div class="people-grid">${state.data.members.map((member) => `<article class="person"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>Shared trip member</p></div><span>${esc(member.role)}</span><footer><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></footer></article>`).join("")}</div>`;
+    return `${heading("YOUR TRAVEL GROUP", "Travellers", isAdmin() ? "Administrator controls traveller access and both PINs." : "Traveller details are read-only with your current PIN.", "traveller")}<div class="share-banner"><div><h3>Two-level protected access</h3><p>Trip code <b>${esc(state.data.trip.tripId)}</b> · Separate Administrator and Traveller PINs</p></div>${isAdmin() ? `<span class="banner-actions"><button data-security>⚿ Security</button><button data-invite>Copy invite link</button></span>` : `<span class="readonly-label">READ ONLY</span>`}</div><div class="people-grid">${state.data.members.map((member) => `<article class="person"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>Shared trip member</p></div><span>${esc(member.role)}</span><footer><span><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></span>${isAdmin() && member.role !== "Organiser" ? `<button class="delete-control" data-delete data-sheet="Members" data-id="${esc(member.id)}">Remove</button>` : ""}</footer></article>`).join("")}</div>`;
   }
 
   function renderPrint() {
@@ -125,7 +136,7 @@
   function render() {
     if (!state.data) return;
     const renderers = { overview: renderOverview, itinerary: renderItinerary, places: renderPlaces, expenses: renderExpenses, people: renderPeople, print: renderPrint };
-    $("#view").innerHTML = renderers[state.tab](); bindViewActions();
+    $("#view").innerHTML = accessNotice() + renderers[state.tab](); bindViewActions();
   }
 
   function bindViewActions() {
@@ -134,6 +145,8 @@
     $$('[data-print]').forEach((button) => button.addEventListener("click", () => printReport(button.dataset.print)));
     $$('[data-map]').forEach((button) => button.addEventListener("click", () => openMap(button.dataset.map)));
     $$('[data-invite]').forEach((button) => button.addEventListener("click", showInvite));
+    $$('[data-security]').forEach((button) => button.addEventListener("click", showSecurity));
+    $$('[data-delete]').forEach((button) => button.addEventListener("click", () => deleteItem(button.dataset.sheet, button.dataset.id)));
     if ($("#mapSearchButton")) $("#mapSearchButton").addEventListener("click", () => { state.mapQuery = $("#mapQuery").value.trim() || state.data.trip.destination; openMap(state.mapQuery); render(); });
   }
 
@@ -143,6 +156,7 @@
   const actions = `<div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save for everyone</button></div>`;
 
   function showAddModal(type) {
+    if (!canAdd(type)) return toast("Administrator PIN required for this action", true);
     if (type === "plan") showModal("Add to itinerary", `<form class="modal-form" data-form="plan"><label>Plan title<input name="title" placeholder="e.g. Sunset cruise" required></label><div class="form-row"><label>Date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Time<input name="time" type="time" value="10:00" required></label></div><label>Place<input name="place" placeholder="Place or address" required></label><label>Notes<textarea name="notes" rows="3" placeholder="Tickets, reminders, meeting point…"></textarea></label>${actions}</form>`);
     if (type === "place") showModal("Save a place", `<form class="modal-form" data-form="place"><label>Place name<input name="name" placeholder="e.g. Dudhsagar Falls" required></label><label>Area or address<input name="area" placeholder="Goa" required></label><div class="form-row"><label>Category<select name="category"><option>Beach</option><option>Food</option><option>Culture</option><option>Nature</option><option>Shopping</option><option>Stay</option></select></label><label>Plan for<select name="plannedDay"><option>Unplanned</option><option>Day 1</option><option>Day 2</option><option>Day 3</option><option>Day 4</option><option>Day 5</option></select></label></div>${actions}</form>`);
     if (type === "expense") showModal("Add an expense", `<form class="modal-form" data-form="expense"><label>What was it for?<input name="label" placeholder="e.g. Dinner at Fisherman’s Wharf" required></label><div class="form-row"><label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" required></label><label>Date<input name="date" type="date" value="${esc(state.data.trip.startDate)}" required></label></div><div class="form-row"><label>Category<select name="category"><option>Food</option><option>Stay</option><option>Travel</option><option>Local travel</option><option>Activities</option><option>Shopping</option><option>Other</option></select></label><label>Paid by<select name="paidBy">${state.data.members.map((member) => `<option>${esc(member.name)}</option>`).join("")}</select></label></div>${actions}</form>`);
@@ -153,7 +167,9 @@
   async function saveForm(event) {
     event.preventDefault();
     const form = event.currentTarget, type = form.dataset.form, values = Object.fromEntries(new FormData(form).entries());
+    if (!canAdd(type)) return toast("Administrator PIN required for this action", true);
     const record = { id: uid(), ...values }; if (type === "expense") record.amount = Number(record.amount);
+    record.createdBy = state.currentUser;
     const collection = { plan: "itinerary", place: "places", expense: "expenses", member: "members" }[type];
     try {
       if (!state.demoMode) await api(`add${type[0].toUpperCase()}${type.slice(1)}`, { tripId: state.data.trip.tripId, pin: state.pin, record });
@@ -162,9 +178,52 @@
   }
 
   function showInvite() {
+    if (!isAdmin()) return toast("Administrator PIN required to invite travellers", true);
     const link = `${location.origin}${location.pathname}?trip=${encodeURIComponent(state.data.trip.tripId)}`;
-    showModal("Invite your travel group", `<div class="invite-box"><p>Share this link and the PIN separately with people you trust. Everyone will see the same Google-backed trip.</p><div class="copy-field"><input id="inviteLink" value="${esc(link)}" readonly><button id="copyInvite">Copy</button></div><div class="pin-box"><span>TRIP CODE<b>${esc(state.data.trip.tripId)}</b></span><span>ACCESS PIN<b>••••</b></span></div></div>`);
+    showModal("Invite your travel group", `<div class="invite-box"><p>Share this link and only the Traveller PIN. Never share the Administrator PIN.</p><div class="copy-field"><input id="inviteLink" value="${esc(link)}" readonly><button id="copyInvite">Copy</button></div><div class="pin-box"><span>TRIP CODE<b>${esc(state.data.trip.tripId)}</b></span><span>TRAVELLER PIN<b>••••</b></span></div><small>The PIN is not displayed after creation. Replace it from Security settings if necessary.</small></div>`);
     $("#copyInvite").addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); } catch (_) {} toast("Invite link copied"); });
+  }
+
+  function showSecurity() {
+    if (!isAdmin()) return toast("Administrator PIN required for Security settings", true);
+    showModal("Security settings", `<form class="modal-form" id="securityForm"><div class="security-note"><i>◆</i><p>Choose different PINs. The Administrator PIN controls editing, deletion, travellers and future PIN changes.</p></div><label>New Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>New Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label>${actions}</form>`);
+    $("#securityForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+      if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true);
+      try {
+        if (!state.demoMode) await api("changePins", { tripId: state.data.trip.tripId, pin: state.pin, adminPin: values.adminPin, travellerPin: values.travellerPin });
+        state.pin = String(values.adminPin); closeModal(); toast("Both access PINs were replaced securely");
+      } catch (error) { toast(error.message, true); }
+    });
+    $('[data-cancel]').addEventListener("click", closeModal);
+  }
+
+  function showEditTrip() {
+    if (!isAdmin()) return toast("Administrator PIN required to edit trip settings", true);
+    const trip = state.data.trip;
+    showModal("Edit trip settings", `<form class="modal-form" id="editTripForm"><label>Trip name<input name="name" value="${esc(trip.name)}" required></label><label>Destination<input name="destination" value="${esc(trip.destination)}" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" value="${esc(trip.startDate)}" required></label><label>End date<input name="endDate" type="date" value="${esc(trip.endDate)}" required></label></div><label>Total budget (₹)<input name="budget" type="number" min="0" step="0.01" value="${esc(trip.budget)}" required></label>${actions}</form>`);
+    $("#editTripForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+      if (new Date(values.endDate) < new Date(values.startDate)) return toast("End date cannot be before the start date", true);
+      const update = { ...values, budget: Number(values.budget) };
+      try {
+        if (!state.demoMode) await api("updateTrip", { tripId: trip.tripId, pin: state.pin, trip: update });
+        state.data.trip = { ...trip, ...update }; closeModal(); hydrateShell(); render(); updatePrintArea(); toast("Trip settings updated by administrator");
+      } catch (error) { toast(error.message, true); }
+    });
+    $('[data-cancel]').addEventListener("click", closeModal);
+  }
+
+  async function deleteItem(sheet, id) {
+    if (!isAdmin()) return toast("Administrator PIN required to delete records", true);
+    const collection = { Itinerary: "itinerary", Places: "places", Expenses: "expenses", Members: "members" }[sheet];
+    try {
+      if (!state.demoMode) await api("deleteRecord", { tripId: state.data.trip.tripId, pin: state.pin, sheet, id });
+      state.data[collection] = state.data[collection].filter((item) => String(item.id) !== String(id));
+      hydrateShell(); render(); updatePrintArea(); toast("Record deleted by administrator");
+    } catch (error) { toast(error.message, true); }
   }
 
   function updatePrintArea() {
@@ -176,15 +235,16 @@
 
   async function refreshTrip() {
     if (state.demoMode) return toast("Demo data is already up to date");
-    try { const data = await api("getTrip", { tripId: state.data.trip.tripId, pin: state.pin }); state.data = normalize(data); hydrateShell(); render(); updatePrintArea(); toast("Latest trip data loaded"); } catch (error) { toast(error.message, true); }
+    try { const data = await api("getTrip", { tripId: state.data.trip.tripId, pin: state.pin }); state.data = normalize(data); state.accessRole = data.accessRole; state.permissions = data.permissions || {}; hydrateShell(); render(); updatePrintArea(); toast("Latest trip data loaded"); } catch (error) { toast(error.message, true); }
   }
 
   $("#joinForm").addEventListener("submit", async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { const trip = await api("getTrip", { tripId: String(data.get("tripId")).trim().toUpperCase(), pin: String(data.get("pin")) }); await openTrip(trip, String(data.get("pin")), false); } catch (error) { toast(error.message, true); } });
-  $("#demoButton").addEventListener("click", () => openTrip(demo, "1234", true, "Sarada"));
-  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><label>Choose an access PIN<input name="pin" type="password" inputmode="numeric" minlength="4" maxlength="8" placeholder="4–8 digits" required></label>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); try { if (!configured) throw new Error("Paste your Apps Script /exec URL in config.js first."); const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, pin: values.pin }); closeModal(); await openTrip(result, values.pin, false, values.createdBy); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
+  $("#adminDemoButton").addEventListener("click", () => openTrip(demo, "654321", true, "Sarada", "administrator"));
+  $("#travellerDemoButton").addEventListener("click", () => openTrip(demo, "1234", true, "Anita", "traveller"));
+  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><div class="form-row"><label>Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label></div><p class="form-help">Use different PINs. Share only the Traveller PIN with the group.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true); try { if (!configured) throw new Error("Paste your Apps Script /exec URL in config.js first."); const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
   $("#closeModal").addEventListener("click", closeModal); $("#modal").addEventListener("mousedown", (event) => { if (event.target === event.currentTarget) closeModal(); });
   $("#mainNav").addEventListener("click", (event) => { const button = event.target.closest("[data-tab]"); if (button) setTab(button.dataset.tab); });
-  $("#inviteButton").addEventListener("click", showInvite); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
+  $("#inviteButton").addEventListener("click", showInvite); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
   $$('[data-add]').forEach((button) => button.addEventListener("click", () => showAddModal(button.dataset.add)));
 
   const invitedTrip = new URLSearchParams(location.search).get("trip"); if (invitedTrip) $("#joinTripId").value = invitedTrip.toUpperCase();

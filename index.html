@@ -16,16 +16,16 @@
         <div class="mobile-logo"><i>↗</i> mytrip</div>
         <span class="kicker">WELCOME TO MYTRIP</span>
         <h2>Open a shared trip</h2>
-        <p>Enter the trip code and PIN supplied by the organiser.</p>
+        <p>Enter the trip code and your Administrator or Traveller PIN. Your permissions are applied automatically.</p>
         <form id="joinForm">
           <label>Trip code<input name="tripId" id="joinTripId" placeholder="e.g. GOA26" autocomplete="off" required></label>
-          <label>Access PIN<input name="pin" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits" required></label>
+          <label>Administrator or Traveller PIN<input name="pin" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits" required></label>
           <button class="primary" type="submit">Open trip →</button>
         </form>
         <div class="or"><span>or</span></div>
-        <button class="demo-button" id="demoButton" type="button">Explore the working demo</button>
+        <div class="demo-choice"><button class="demo-button" id="adminDemoButton" type="button">Administrator demo</button><button class="demo-button" id="travellerDemoButton" type="button">Traveller demo</button></div>
         <button class="text-button" id="showCreateButton" type="button">＋ Create a new trip</button>
-        <p class="access-note">No account is required. Your organiser controls the shared PIN.</p>
+        <p class="access-note">The administrator controls two separate PINs. Never share the Administrator PIN.</p>
       </div>
     </div>
   </section>
@@ -42,13 +42,13 @@
         <button data-tab="print"><i>▤</i><span>Print & Export</span></button>
       </nav>
       <div class="current-trip"><span class="kicker">CURRENT TRIP</span><div><i>🌴</i><span><b id="sideTripName">Goa escape</b><small id="sideTripDates">19–23 Nov 2026</small></span></div></div>
-      <div class="user"><span>SS</span><div><b id="currentUser">Traveller</b><small>Shared trip member</small></div><button id="leaveTrip" title="Close trip">↪</button></div>
+      <div class="user"><span>SS</span><div><b id="currentUser">Traveller</b><small id="currentRoleLabel">Traveller access</small></div><button id="leaveTrip" title="Close trip">↪</button></div>
     </aside>
 
     <main class="workspace">
-      <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
+      <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><span class="access-badge" id="accessBadge">ADMINISTRATOR</span><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
       <div class="content">
-        <section class="trip-heading"><div><span class="trip-status">● UPCOMING TRIP</span><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
+        <section class="trip-heading"><div><span class="trip-status">● UPCOMING TRIP</span><h1 id="tripTitle">Goa, here we come! ☀</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
         <div id="view"></div>
       </div>
     </main>

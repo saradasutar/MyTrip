@@ -25,7 +25,7 @@ The script automatically creates a spreadsheet named **MyTrip Dashboard Data** w
 
 1. In Apps Script, click **Deploy** → **New deployment**.
 2. Click the gear icon beside “Select type” and choose **Web app**.
-3. Description: enter `MyTrip version 1`.
+3. Description: enter `MyTrip version 2`.
 4. Execute as: choose **Me**.
 5. Who has access: choose **Anyone**.
 6. Click **Deploy** and approve access if requested.
@@ -84,12 +84,25 @@ GitHub will publish the dashboard in a few minutes. Its address will normally be
 
 1. Open your GitHub Pages dashboard.
 2. Click **Create a new trip**.
-3. Enter the trip name, destination, dates, budget, your name and a 4–8 digit PIN.
+3. Enter the trip name, destination, dates, budget, your name, a 6–8 digit Administrator PIN, and a different 4–8 digit Traveller PIN.
 4. The dashboard creates a trip code automatically.
 5. Click **Invite** to copy the invite link.
-6. Send the invite link and PIN to trusted travellers. For better security, send the PIN separately.
+6. Send the invite link and only the **Traveller PIN** to trusted travellers. For better security, send the PIN separately.
 
-Everyone using the same trip code and PIN will see the same Google Sheet data. Use **Refresh** to load changes made by another person.
+The login screen automatically detects which PIN was entered and applies its permissions. Everyone using the same trip code sees the same Google Sheet data. Use **Refresh** to load changes made by another person.
+
+### Administrator and Traveller access
+
+| Action | Administrator | Traveller |
+| --- | :---: | :---: |
+| View the dashboard, Google Maps and print reports | ✓ | ✓ |
+| Add plans and expenses | ✓ | ✓ |
+| Save or remove places | ✓ | — |
+| Add or remove travellers | ✓ | — |
+| Delete records | ✓ | — |
+| Change trip settings and both PINs | ✓ | — |
+
+Keep the Administrator PIN with the trip organiser. Do not send it in the group invite.
 
 ## How to use the dashboard
 
@@ -137,6 +150,18 @@ Upload the changed file to the same GitHub repository and commit it. GitHub Page
 
 Normally the `/exec` URL remains the same, so `config.js` does not need to be changed.
 
+### Upgrading an existing MyTrip version 1 installation
+
+1. Replace your existing Apps Script code with the new `backend/Code.gs` and click **Save**.
+2. Select **setupMyTrip** in the function list and click **Run** once. It adds the two new security columns without deleting existing trips, plans or expenses.
+3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
+4. Under Version, choose **New version**, then click **Deploy**.
+5. Sign in to an existing trip using its old PIN. During migration, that PIN is treated as the Administrator PIN.
+6. Open **Travellers** → **Security**, then set a new Administrator PIN and a different Traveller PIN.
+7. Share only the Traveller PIN with your group.
+
+Changing both PINs completes the migration and disables the old version 1 PIN.
+
 ## Troubleshooting
 
 ### “Paste your Apps Script URL” message
@@ -149,7 +174,7 @@ Return to Apps Script and run `setupMyTrip()` once.
 
 ### “Incorrect trip PIN”
 
-Check the PIN with the organiser. The stored PIN cannot be read from the Sheet because only its hash is saved.
+Check the PIN with the organiser. The stored PINs cannot be read from the Sheet because only their hashes are saved. If the organiser has changed both PINs, the old PIN no longer works.
 
 ### Dashboard still shows the old version
 
