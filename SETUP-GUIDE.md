@@ -35,13 +35,13 @@ Keep that `/exec` URL ready for the next part. Do not use the URL ending in `/de
 
 ## Part 3 — Connect the frontend
 
+Choose either method below. Method A connects every visitor automatically. Method B is easiest when the site is already on GitHub.
+
+### Method A — Put the URL in `config.js`
+
 1. Open the supplied file `config.js`.
-2. Find this text:
-
-   `PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE`
-
-3. Replace only that text with the `/exec` URL copied in Part 2. Keep the quotation marks.
-4. Save `config.js`.
+2. Paste the `/exec` URL between the quotation marks after `API_URL:`.
+3. Save `config.js` and upload it with the other frontend files.
 
 Example:
 
@@ -52,6 +52,14 @@ window.MYTRIP_CONFIG = {
   DEFAULT_CURRENCY: "INR"
 };
 ```
+
+### Method B — Connect from the dashboard
+
+1. Leave `API_URL` blank and publish the frontend in Part 4.
+2. Open the dashboard and click **Connect** beside “Google backend not connected”.
+3. Paste the `/exec` URL and click **Test & connect**.
+
+The dashboard checks the backend and remembers it in that browser. Invite links created by the administrator automatically carry the same public backend address so travellers can open the shared trip.
 
 ## Part 4 — Publish on GitHub Pages
 
@@ -83,11 +91,12 @@ GitHub will publish the dashboard in a few minutes. Its address will normally be
 ## Part 5 — Create and share your first trip
 
 1. Open your GitHub Pages dashboard.
-2. Click **Create a new trip**.
-3. Enter the trip name, destination, dates, budget, your name, a 6–8 digit Administrator PIN, and a different 4–8 digit Traveller PIN.
-4. The dashboard creates a trip code automatically.
-5. Click **Invite** to copy the invite link.
-6. Send the invite link and only the **Traveller PIN** to trusted travellers. For better security, send the PIN separately.
+2. If it says **Google backend not connected**, click **Connect**, paste the `/exec` URL, and wait for the green connected message.
+3. Click **Create a new trip**.
+4. Enter the trip name, destination, dates, budget, your name, a 6–8 digit Administrator PIN, and a different 4–8 digit Traveller PIN.
+5. The dashboard creates a trip code automatically.
+6. Click **Invite** to copy the invite link.
+7. Send the invite link and only the **Traveller PIN** to trusted travellers. For better security, send the PIN separately.
 
 The login screen automatically detects which PIN was entered and applies its permissions. Everyone using the same trip code sees the same Google Sheet data. Use **Refresh** to load changes made by another person.
 
@@ -166,7 +175,11 @@ Changing both PINs completes the migration and disables the old version 1 PIN.
 
 ### “Paste your Apps Script URL” message
 
-The URL in `config.js` is missing or is not the deployed `/exec` URL.
+Click **Connect** on the dashboard and paste the deployed `/exec` URL, or add it to `config.js`. Do not use the `/dev` URL.
+
+### “Could not connect” message
+
+Confirm that the Apps Script deployment is a **Web app**, “Execute as” is **Me**, “Who has access” is **Anyone**, and the URL ends in `/exec`. After changing Apps Script, deploy a **New version** before trying again.
 
 ### “Backend setup is incomplete”
 

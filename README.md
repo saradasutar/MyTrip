@@ -12,6 +12,7 @@ MyTrip is a free shared travel planner designed for:
 - Create a trip with destination, dates, budget and organiser
 - Join a trip using a trip code and an Administrator or Traveller PIN
 - Automatic role detection with permissions enforced by the Google backend
+- In-page Google backend connection and verification for existing GitHub sites
 - Share one live trip with several people
 - Build a day-by-day itinerary
 - Save places and open them in Google Maps
@@ -32,7 +33,7 @@ MyTrip is a free shared travel planner designed for:
 | `index.html` | Main GitHub Pages dashboard |
 | `styles.css` | Colours, layout, mobile and print design |
 | `app.js` | Dashboard interactions and backend connection |
-| `config.js` | Your Google Apps Script `/exec` URL |
+| `config.js` | Optional default Google Apps Script `/exec` URL |
 | `backend/Code.gs` | Google backend and Sheet database code |
 | `backend/appsscript.json` | Apps Script project settings |
 | `SETUP-GUIDE.md` | Complete non-coder deployment instructions |

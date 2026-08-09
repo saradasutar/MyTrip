@@ -1,6 +1,7 @@
-/* Paste your deployed Google Apps Script /exec URL below. */
+/* Optional: paste your deployed Google Apps Script /exec URL below.
+   If left blank, the dashboard will ask the administrator to connect it. */
 window.MYTRIP_CONFIG = {
-  API_URL: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+  API_URL: "",
   APP_NAME: "MyTrip",
   DEFAULT_CURRENCY: "INR"
 };

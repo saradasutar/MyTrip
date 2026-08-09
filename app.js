@@ -2,7 +2,11 @@
   "use strict";
 
   const config = window.MYTRIP_CONFIG || {};
-  const configured = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(config.API_URL || "");
+  const apiStorageKey = "mytrip_google_backend_url";
+  const validApiUrl = (value) => /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(value || "").trim());
+  function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch (_) { return ""; } }
+  function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch (_) {} }
+  let apiUrl = validApiUrl(config.API_URL) ? String(config.API_URL).trim() : (validApiUrl(readStoredApiUrl()) ? readStoredApiUrl() : "");
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: config.DEFAULT_CURRENCY || "INR", maximumFractionDigits: 0 });
@@ -51,14 +55,19 @@
   function nights() { return Math.max(0, Math.round((new Date(state.data.trip.endDate) - new Date(state.data.trip.startDate)) / 86400000)); }
   function spent() { return state.data.expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0); }
   function remaining() { return Number(state.data.trip.budget || 0) - spent(); }
-  function apiUrlReady() { if (!configured) { toast("First paste your Apps Script /exec URL in config.js", true); return false; } return true; }
+  function apiUrlReady() { return validApiUrl(apiUrl); }
 
-  async function api(action, payload = {}) {
-    if (!apiUrlReady()) throw new Error("Backend URL is not configured.");
-    const response = await fetch(config.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, ...payload }) });
+  async function requestAt(url, action, payload = {}) {
+    const response = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, ...payload }) });
+    if (!response.ok) throw new Error(`Google backend returned HTTP ${response.status}.`);
     const result = await response.json();
     if (!result.ok) throw new Error(result.error || "The request could not be completed.");
     return result.data;
+  }
+
+  async function api(action, payload = {}) {
+    if (!apiUrlReady()) throw new Error("Connect the Google backend first.");
+    return requestAt(apiUrl, action, payload);
   }
 
   function normalize(data) {
@@ -155,6 +164,34 @@
   function closeModal() { $("#modal").classList.add("hidden"); $("#modalBody").innerHTML = ""; }
   const actions = `<div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save for everyone</button></div>`;
 
+  function updateBackendStatus() {
+    const panel = $("#backendStatus");
+    const connected = apiUrlReady();
+    panel.classList.toggle("connected", connected);
+    panel.querySelector("b").textContent = connected ? "Google backend connected" : "Google backend not connected";
+    panel.querySelector("button").textContent = connected ? "Change" : "Connect";
+  }
+
+  function showBackendSetup(afterConnect) {
+    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>One-time connection</b><p>Deploy the supplied <code>backend/Code.gs</code> as a Google Apps Script Web App, then paste its URL ending in <code>/exec</code>.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection is checked before it is saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test & connect</button></div></form>`);
+    const form = $("#backendForm");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const candidate = String(new FormData(form).get("apiUrl") || "").trim();
+      if (!validApiUrl(candidate)) return toast("Enter a valid Apps Script URL ending in /exec", true);
+      const submit = form.querySelector('button[type="submit"]');
+      submit.disabled = true; submit.textContent = "Checking…";
+      try {
+        await requestAt(candidate, "ping");
+        apiUrl = candidate; saveStoredApiUrl(candidate); updateBackendStatus(); closeModal(); toast("Google backend connected");
+        if (typeof afterConnect === "function") afterConnect();
+      } catch (error) {
+        toast(`Could not connect: ${error.message}`, true); submit.disabled = false; submit.textContent = "Test & connect";
+      }
+    });
+    $('[data-cancel]').addEventListener("click", closeModal);
+  }
+
   function showAddModal(type) {
     if (!canAdd(type)) return toast("Administrator PIN required for this action", true);
     if (type === "plan") showModal("Add to itinerary", `<form class="modal-form" data-form="plan"><label>Plan title<input name="title" placeholder="e.g. Sunset cruise" required></label><div class="form-row"><label>Date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Time<input name="time" type="time" value="10:00" required></label></div><label>Place<input name="place" placeholder="Place or address" required></label><label>Notes<textarea name="notes" rows="3" placeholder="Tickets, reminders, meeting point…"></textarea></label>${actions}</form>`);
@@ -179,7 +216,9 @@
 
   function showInvite() {
     if (!isAdmin()) return toast("Administrator PIN required to invite travellers", true);
-    const link = `${location.origin}${location.pathname}?trip=${encodeURIComponent(state.data.trip.tripId)}`;
+    const inviteParams = new URLSearchParams({ trip: state.data.trip.tripId });
+    if (!validApiUrl(config.API_URL) && apiUrlReady()) inviteParams.set("api", apiUrl);
+    const link = `${location.origin}${location.pathname}?${inviteParams.toString()}`;
     showModal("Invite your travel group", `<div class="invite-box"><p>Share this link and only the Traveller PIN. Never share the Administrator PIN.</p><div class="copy-field"><input id="inviteLink" value="${esc(link)}" readonly><button id="copyInvite">Copy</button></div><div class="pin-box"><span>TRIP CODE<b>${esc(state.data.trip.tripId)}</b></span><span>TRAVELLER PIN<b>••••</b></span></div><small>The PIN is not displayed after creation. Replace it from Security settings if necessary.</small></div>`);
     $("#copyInvite").addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); } catch (_) {} toast("Invite link copied"); });
   }
@@ -238,14 +277,20 @@
     try { const data = await api("getTrip", { tripId: state.data.trip.tripId, pin: state.pin }); state.data = normalize(data); state.accessRole = data.accessRole; state.permissions = data.permissions || {}; hydrateShell(); render(); updatePrintArea(); toast("Latest trip data loaded"); } catch (error) { toast(error.message, true); }
   }
 
+  $("#joinForm").addEventListener("submit", (event) => { if (!apiUrlReady()) { event.preventDefault(); event.stopImmediatePropagation(); showBackendSetup(() => $("#joinForm").requestSubmit()); } }, true);
   $("#joinForm").addEventListener("submit", async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { const trip = await api("getTrip", { tripId: String(data.get("tripId")).trim().toUpperCase(), pin: String(data.get("pin")) }); await openTrip(trip, String(data.get("pin")), false); } catch (error) { toast(error.message, true); } });
   $("#adminDemoButton").addEventListener("click", () => openTrip(demo, "654321", true, "Sarada", "administrator"));
   $("#travellerDemoButton").addEventListener("click", () => openTrip(demo, "1234", true, "Anita", "traveller"));
-  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><div class="form-row"><label>Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label></div><p class="form-help">Use different PINs. Share only the Traveller PIN with the group.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true); try { if (!configured) throw new Error("Paste your Apps Script /exec URL in config.js first."); const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
+  $("#showCreateButton").addEventListener("click", (event) => { if (!apiUrlReady()) { event.stopImmediatePropagation(); showBackendSetup(() => $("#showCreateButton").click()); } }, true);
+  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><div class="form-row"><label>Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label></div><p class="form-help">Use different PINs. Share only the Traveller PIN with the group.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true); try { const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
   $("#closeModal").addEventListener("click", closeModal); $("#modal").addEventListener("mousedown", (event) => { if (event.target === event.currentTarget) closeModal(); });
   $("#mainNav").addEventListener("click", (event) => { const button = event.target.closest("[data-tab]"); if (button) setTab(button.dataset.tab); });
-  $("#inviteButton").addEventListener("click", showInvite); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
+  $("#inviteButton").addEventListener("click", showInvite); $("#connectBackendButton").addEventListener("click", () => showBackendSetup()); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
   $$('[data-add]').forEach((button) => button.addEventListener("click", () => showAddModal(button.dataset.add)));
 
-  const invitedTrip = new URLSearchParams(location.search).get("trip"); if (invitedTrip) $("#joinTripId").value = invitedTrip.toUpperCase();
+  const inviteQuery = new URLSearchParams(location.search);
+  const invitedApi = inviteQuery.get("api");
+  if (!validApiUrl(config.API_URL) && validApiUrl(invitedApi)) { apiUrl = invitedApi; saveStoredApiUrl(apiUrl); }
+  updateBackendStatus();
+  const invitedTrip = inviteQuery.get("trip"); if (invitedTrip) $("#joinTripId").value = invitedTrip.toUpperCase();
 })();
