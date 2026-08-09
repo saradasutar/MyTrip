@@ -25,7 +25,7 @@ The script automatically creates a spreadsheet named **MyTrip Dashboard Data** w
 
 1. In Apps Script, click **Deploy** → **New deployment**.
 2. Click the gear icon beside “Select type” and choose **Web app**.
-3. Description: enter `MyTrip version 2`.
+3. Description: enter `MyTrip version 3`.
 4. Execute as: choose **Me**.
 5. Who has access: choose **Anyone**.
 6. Click **Deploy** and approve access if requested.
@@ -93,25 +93,35 @@ GitHub will publish the dashboard in a few minutes. Its address will normally be
 1. Open your GitHub Pages dashboard.
 2. If it says **Google backend not connected**, click **Connect**, paste the `/exec` URL, and wait for the green connected message.
 3. Click **Create a new trip**.
-4. Enter the trip name, destination, dates, budget, your name, a 6–8 digit Administrator PIN, and a different 4–8 digit Traveller PIN.
+4. Enter the trip name, destination, dates, budget, your name, your global Administrator password/PIN (6–64 characters), and a different 4–8 digit Traveller PIN for this trip.
 5. The dashboard creates a trip code automatically.
 6. Click **Invite** to copy the invite link.
 7. Send the invite link and only the **Traveller PIN** to trusted travellers. For better security, send the PIN separately.
 
-The login screen automatically detects which PIN was entered and applies its permissions. Everyone using the same trip code sees the same Google Sheet data. Use **Refresh** to load changes made by another person.
+Use the same global Administrator password/PIN whenever you create another trip. Choose a different Traveller PIN for every trip. The login screen detects the access type automatically. Everyone using the same trip code sees the same Google Sheet data. Use **Refresh** to load changes made by another person.
 
 ### Administrator and Traveller access
 
 | Action | Administrator | Traveller |
 | --- | :---: | :---: |
+| View and switch between all trips | ✓ | — |
 | View the dashboard, Google Maps and print reports | ✓ | ✓ |
 | Add plans and expenses | ✓ | ✓ |
 | Save or remove places | ✓ | — |
 | Add or remove travellers | ✓ | — |
 | Delete records | ✓ | — |
-| Change trip settings and both PINs | ✓ | — |
+| Change trip settings and global Administrator access | ✓ | — |
+| Change this trip’s Traveller PIN | ✓ | — |
 
-Keep the Administrator PIN with the trip organiser. Do not send it in the group invite.
+Keep the global Administrator password/PIN with the organiser. Do not send it in a group invite. Send only the Traveller PIN belonging to that specific trip.
+
+### View all trips as Administrator
+
+1. On the opening screen, click **Administrator · View all trips**.
+2. Enter your one global Administrator password/PIN.
+3. Select any trip and click **Open**.
+
+Travellers cannot open this list. A Traveller PIN works only with its own trip code.
 
 ## How to use the dashboard
 
@@ -159,17 +169,19 @@ Upload the changed file to the same GitHub repository and commit it. GitHub Page
 
 Normally the `/exec` URL remains the same, so `config.js` does not need to be changed.
 
-### Upgrading an existing MyTrip version 1 installation
+### Upgrading an existing MyTrip version 1 or 2 installation
 
 1. Replace your existing Apps Script code with the new `backend/Code.gs` and click **Save**.
 2. Select **setupMyTrip** in the function list and click **Run** once. It adds the two new security columns without deleting existing trips, plans or expenses.
 3. Click **Deploy** → **Manage deployments** → the pencil/edit icon.
 4. Under Version, choose **New version**, then click **Deploy**.
-5. Sign in to an existing trip using its old PIN. During migration, that PIN is treated as the Administrator PIN.
-6. Open **Travellers** → **Security**, then set a new Administrator PIN and a different Traveller PIN.
-7. Share only the Traveller PIN with your group.
+5. Open any existing trip using its old Administrator PIN. On the first successful Administrator login, MyTrip safely adopts that PIN as the global Administrator access for all trips.
+6. Click **All trips** to confirm that every trip is listed.
+7. Open **Travellers** → **Security** and set a strong global Administrator password/PIN plus the Traveller PIN for that trip.
+8. Open each other trip and assign a different Traveller PIN when different travel groups are involved.
+9. Share only the relevant trip’s Traveller PIN with its travellers.
 
-Changing both PINs completes the migration and disables the old version 1 PIN.
+After the global Administrator access is established, old per-trip Administrator PINs are no longer accepted. The one global Administrator password/PIN opens every trip without changing or deleting existing trip data.
 
 ## Troubleshooting
 
@@ -187,7 +199,7 @@ Return to Apps Script and run `setupMyTrip()` once.
 
 ### “Incorrect trip PIN”
 
-Check the PIN with the organiser. The stored PINs cannot be read from the Sheet because only their hashes are saved. If the organiser has changed both PINs, the old PIN no longer works.
+Check the trip code and its Traveller PIN with the organiser. Administrators should use the global Administrator password/PIN. Stored access secrets cannot be read because only their hashes are saved.
 
 ### Dashboard still shows the old version
 

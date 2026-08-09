@@ -4,8 +4,8 @@
   const config = window.MYTRIP_CONFIG || {};
   const apiStorageKey = "mytrip_google_backend_url";
   const validApiUrl = (value) => /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(value || "").trim());
-  function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch (_) { return ""; } }
-  function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch (_) {} }
+  function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch { return ""; } }
+  function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch {} }
   let apiUrl = validApiUrl(config.API_URL) ? String(config.API_URL).trim() : (validApiUrl(readStoredApiUrl()) ? readStoredApiUrl() : "");
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -46,6 +46,11 @@
 
   const state = { data: null, tab: "overview", pin: "", demoMode: false, mapQuery: "Goa, India", currentUser: "Traveller", accessRole: "traveller", permissions: {} };
   const labels = { overview: "Overview", itinerary: "Itinerary", places: "Places & Map", expenses: "Expenses", people: "Travellers", print: "Print & Export" };
+  const demoTrips = [
+    { tripId: "GOA26", name: "Goa Escape", destination: "Goa", startDate: "2026-11-19", endDate: "2026-11-23", budget: 85000, spent: 32450, travellerCount: 6, createdBy: "Sarada" },
+    { tripId: "KER27", name: "Kerala Backwaters", destination: "Alappuzha", startDate: "2027-01-14", endDate: "2027-01-18", budget: 72000, spent: 8400, travellerCount: 4, createdBy: "Sarada" },
+    { tripId: "MYS26", name: "Mysuru Weekend", destination: "Mysuru", startDate: "2026-09-05", endDate: "2026-09-07", budget: 28000, spent: 12650, travellerCount: 3, createdBy: "Sarada" }
+  ];
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
   function toast(message, error = false) { const element = $("#toast"); element.textContent = `${error ? "!" : "✓"} ${message}`; element.style.background = error ? "#a34343" : "#17263c"; element.classList.remove("hidden"); clearTimeout(toast.timer); toast.timer = setTimeout(() => element.classList.add("hidden"), 2800); }
@@ -91,10 +96,11 @@
     $("#tripMeta").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "long", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "long", year: "numeric" })} · ${nights()} nights · ${members.length} travellers`;
     $("#sideTripName").textContent = trip.name; $("#sideTripDates").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "short" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}`;
     $("#currentUser").textContent = state.currentUser;
-    $("#currentRoleLabel").textContent = isAdmin() ? "Administrator access" : "Traveller access";
+    $("#currentRoleLabel").textContent = isAdmin() ? "Global Administrator" : "Traveller access";
     $("#accessBadge").textContent = isAdmin() ? "ADMINISTRATOR" : "TRAVELLER";
     $("#accessBadge").classList.toggle("traveller", !isAdmin());
     $("#inviteButton").classList.toggle("hidden", !isAdmin());
+    $("#allTripsButton").classList.toggle("hidden", !isAdmin());
     $("#editTripButton").classList.toggle("hidden", !isAdmin());
     $("#topAvatars").innerHTML = members.slice(0, 3).map((member) => `<span title="${esc(member.name)}">${esc(initials(member.name))}</span>`).join("") + (members.length > 3 ? `<span>+${members.length - 3}</span>` : "");
   }
@@ -107,7 +113,7 @@
 
   function heading(kicker, title, action = "", add = "") { return `<div class="view-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2><p>${action}</p></div>${add && canAdd(add) ? `<button class="primary" data-add="${add}">＋ Add ${add}</button>` : ""}</div>`; }
   function panelHead(kicker, title, tab) { return `<div class="panel-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2></div>${tab ? `<button data-go="${tab}">View all →</button>` : ""}</div>`; }
-  function accessNotice() { return `<section class="permission-banner ${isAdmin() ? "admin" : "traveller"}"><i>${isAdmin() ? "◆" : "♙"}</i><div><b>${isAdmin() ? "Administrator access" : "Traveller access"}</b><p>${isAdmin() ? "PIN security, saved places, traveller management and deletion controls are unlocked." : "You can view, add plans and expenses, use maps and print. Administrative controls are locked."}</p></div>${isAdmin() ? `<button data-security>Security settings</button>` : `<span>LIMITED ACCESS</span>`}</section>`; }
+  function accessNotice() { return `<section class="permission-banner ${isAdmin() ? "admin" : "traveller"}"><i>${isAdmin() ? "◆" : "♙"}</i><div><b>${isAdmin() ? "Global Administrator access" : "Traveller access"}</b><p>${isAdmin() ? "You can open every trip, manage each trip’s Traveller PIN, and use all administrative controls." : "You can use only this trip: view, add plans and expenses, use maps and print."}</p></div>${isAdmin() ? `<button data-all-trips>All trips</button><button data-security>Security</button>` : `<span>TRIP-ONLY ACCESS</span>`}</section>`; }
 
   function renderOverview() {
     const budget = Number(state.data.trip.budget || 0), total = spent(), percent = budget ? Math.min(100, Math.round(total / budget * 100)) : 0;
@@ -135,7 +141,7 @@
 
   function renderPeople() {
     const totals = Object.fromEntries(state.data.members.map((member) => [member.name, state.data.expenses.filter((expense) => expense.paidBy === member.name).reduce((sum, expense) => sum + Number(expense.amount), 0)]));
-    return `${heading("YOUR TRAVEL GROUP", "Travellers", isAdmin() ? "Administrator controls traveller access and both PINs." : "Traveller details are read-only with your current PIN.", "traveller")}<div class="share-banner"><div><h3>Two-level protected access</h3><p>Trip code <b>${esc(state.data.trip.tripId)}</b> · Separate Administrator and Traveller PINs</p></div>${isAdmin() ? `<span class="banner-actions"><button data-security>⚿ Security</button><button data-invite>Copy invite link</button></span>` : `<span class="readonly-label">READ ONLY</span>`}</div><div class="people-grid">${state.data.members.map((member) => `<article class="person"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>Shared trip member</p></div><span>${esc(member.role)}</span><footer><span><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></span>${isAdmin() && member.role !== "Organiser" ? `<button class="delete-control" data-delete data-sheet="Members" data-id="${esc(member.id)}">Remove</button>` : ""}</footer></article>`).join("")}</div>`;
+    return `${heading("YOUR TRAVEL GROUP", "Travellers", isAdmin() ? "Set the separate Traveller PIN for this trip; your Administrator access remains global." : "Traveller details are read-only with your current trip PIN.", "traveller")}<div class="share-banner"><div><h3>Global admin · Separate trip access</h3><p>Trip code <b>${esc(state.data.trip.tripId)}</b> · This trip has its own Traveller PIN</p></div>${isAdmin() ? `<span class="banner-actions"><button data-all-trips>All trips</button><button data-security>⚿ Security</button><button data-invite>Copy invite link</button></span>` : `<span class="readonly-label">TRIP ONLY</span>`}</div><div class="people-grid">${state.data.members.map((member) => `<article class="person"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>Shared trip member</p></div><span>${esc(member.role)}</span><footer><span><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></span>${isAdmin() && member.role !== "Organiser" ? `<button class="delete-control" data-delete data-sheet="Members" data-id="${esc(member.id)}">Remove</button>` : ""}</footer></article>`).join("")}</div>`;
   }
 
   function renderPrint() {
@@ -154,6 +160,7 @@
     $$('[data-print]').forEach((button) => button.addEventListener("click", () => printReport(button.dataset.print)));
     $$('[data-map]').forEach((button) => button.addEventListener("click", () => openMap(button.dataset.map)));
     $$('[data-invite]').forEach((button) => button.addEventListener("click", showInvite));
+    $$('[data-all-trips]').forEach((button) => button.addEventListener("click", showAllTrips));
     $$('[data-security]').forEach((button) => button.addEventListener("click", showSecurity));
     $$('[data-delete]').forEach((button) => button.addEventListener("click", () => deleteItem(button.dataset.sheet, button.dataset.id)));
     if ($("#mapSearchButton")) $("#mapSearchButton").addEventListener("click", () => { state.mapQuery = $("#mapQuery").value.trim() || state.data.trip.destination; openMap(state.mapQuery); render(); });
@@ -192,8 +199,46 @@
     $('[data-cancel]').addEventListener("click", closeModal);
   }
 
+  function renderAllTrips(trips, administratorSecret, demoMode) {
+    const items = trips || [];
+    showModal("All trips", `<div class="all-trips-modal"><div class="all-trips-summary"><span><small>ADMINISTRATOR LIBRARY</small><b>${items.length} ${items.length === 1 ? "trip" : "trips"}</b></span><button id="createFromTrips" type="button">＋ Create new trip</button></div><div class="trip-library">${items.map((trip) => `<article class="trip-library-card"><i>⌖</i><div><span>${esc(trip.tripId)}</span><h3>${esc(trip.name)}</h3><p>${esc(trip.destination)} · ${displayDate(trip.startDate, { day: "numeric", month: "short", year: "numeric" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}</p><small>${Number(trip.travellerCount || 0)} travellers · ${money.format(Number(trip.spent || 0))} spent</small></div><button data-open-admin-trip="${esc(trip.tripId)}" type="button">Open →</button></article>`).join("") || `<div class="empty-trips"><b>No trips yet</b><p>Create your first trip with this Administrator password/PIN.</p></div>`}</div><p class="global-access-note">◆ The same Administrator password/PIN opens every trip. Traveller PINs remain separate for each trip.</p></div>`);
+    $("#createFromTrips").addEventListener("click", () => { closeModal(); $("#showCreateButton").click(); });
+    $$('[data-open-admin-trip]').forEach((button) => button.addEventListener("click", async () => {
+      const tripId = button.dataset.openAdminTrip;
+      try {
+        if (demoMode) {
+          const summary = demoTrips.find((trip) => trip.tripId === tripId) || demoTrips[0];
+          const bundle = clone(demo); bundle.trip = { ...bundle.trip, ...summary };
+          closeModal(); await openTrip(bundle, administratorSecret, true, summary.createdBy, "administrator");
+        } else {
+          const bundle = await api("getTrip", { tripId, pin: administratorSecret });
+          closeModal(); await openTrip(bundle, administratorSecret, false, bundle.trip.createdBy, "administrator");
+        }
+      } catch (error) { toast(error.message, true); }
+    }));
+  }
+
+  async function loadAllTrips(administratorSecret, demoMode) {
+    try {
+      const trips = demoMode ? demoTrips : (await api("listTrips", { pin: administratorSecret })).trips;
+      renderAllTrips(trips, administratorSecret, demoMode);
+    } catch (error) { toast(error.message, true); }
+  }
+
+  function showAllTrips() {
+    if (!apiUrlReady() && !state.demoMode) return showBackendSetup(showAllTrips);
+    if (state.data && isAdmin()) return loadAllTrips(state.pin, state.demoMode);
+    showModal("Administrator · All trips", `<form class="modal-form" id="allTripsLoginForm"><div class="security-note"><i>◆</i><p>Use your one global Administrator password/PIN to see every trip. Traveller PINs cannot open this list.</p></div><label>Global Administrator password/PIN<input name="adminPin" type="password" minlength="4" maxlength="64" autocomplete="current-password" placeholder="Your administrator access" required></label><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">View all trips</button></div></form>`);
+    $("#allTripsLoginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const secret = String(new FormData(event.currentTarget).get("adminPin") || "");
+      await loadAllTrips(secret, false);
+    });
+    $('[data-cancel]').addEventListener("click", closeModal);
+  }
+
   function showAddModal(type) {
-    if (!canAdd(type)) return toast("Administrator PIN required for this action", true);
+    if (!canAdd(type)) return toast("Global Administrator access required for this action", true);
     if (type === "plan") showModal("Add to itinerary", `<form class="modal-form" data-form="plan"><label>Plan title<input name="title" placeholder="e.g. Sunset cruise" required></label><div class="form-row"><label>Date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Time<input name="time" type="time" value="10:00" required></label></div><label>Place<input name="place" placeholder="Place or address" required></label><label>Notes<textarea name="notes" rows="3" placeholder="Tickets, reminders, meeting point…"></textarea></label>${actions}</form>`);
     if (type === "place") showModal("Save a place", `<form class="modal-form" data-form="place"><label>Place name<input name="name" placeholder="e.g. Dudhsagar Falls" required></label><label>Area or address<input name="area" placeholder="Goa" required></label><div class="form-row"><label>Category<select name="category"><option>Beach</option><option>Food</option><option>Culture</option><option>Nature</option><option>Shopping</option><option>Stay</option></select></label><label>Plan for<select name="plannedDay"><option>Unplanned</option><option>Day 1</option><option>Day 2</option><option>Day 3</option><option>Day 4</option><option>Day 5</option></select></label></div>${actions}</form>`);
     if (type === "expense") showModal("Add an expense", `<form class="modal-form" data-form="expense"><label>What was it for?<input name="label" placeholder="e.g. Dinner at Fisherman’s Wharf" required></label><div class="form-row"><label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" required></label><label>Date<input name="date" type="date" value="${esc(state.data.trip.startDate)}" required></label></div><div class="form-row"><label>Category<select name="category"><option>Food</option><option>Stay</option><option>Travel</option><option>Local travel</option><option>Activities</option><option>Shopping</option><option>Other</option></select></label><label>Paid by<select name="paidBy">${state.data.members.map((member) => `<option>${esc(member.name)}</option>`).join("")}</select></label></div>${actions}</form>`);
@@ -204,7 +249,7 @@
   async function saveForm(event) {
     event.preventDefault();
     const form = event.currentTarget, type = form.dataset.form, values = Object.fromEntries(new FormData(form).entries());
-    if (!canAdd(type)) return toast("Administrator PIN required for this action", true);
+    if (!canAdd(type)) return toast("Global Administrator access required for this action", true);
     const record = { id: uid(), ...values }; if (type === "expense") record.amount = Number(record.amount);
     record.createdBy = state.currentUser;
     const collection = { plan: "itinerary", place: "places", expense: "expenses", member: "members" }[type];
@@ -215,31 +260,31 @@
   }
 
   function showInvite() {
-    if (!isAdmin()) return toast("Administrator PIN required to invite travellers", true);
+    if (!isAdmin()) return toast("Global Administrator access required to invite travellers", true);
     const inviteParams = new URLSearchParams({ trip: state.data.trip.tripId });
     if (!validApiUrl(config.API_URL) && apiUrlReady()) inviteParams.set("api", apiUrl);
     const link = `${location.origin}${location.pathname}?${inviteParams.toString()}`;
-    showModal("Invite your travel group", `<div class="invite-box"><p>Share this link and only the Traveller PIN. Never share the Administrator PIN.</p><div class="copy-field"><input id="inviteLink" value="${esc(link)}" readonly><button id="copyInvite">Copy</button></div><div class="pin-box"><span>TRIP CODE<b>${esc(state.data.trip.tripId)}</b></span><span>TRAVELLER PIN<b>••••</b></span></div><small>The PIN is not displayed after creation. Replace it from Security settings if necessary.</small></div>`);
-    $("#copyInvite").addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); } catch (_) {} toast("Invite link copied"); });
+    showModal("Invite your travel group", `<div class="invite-box"><p>Share this link and only this trip’s Traveller PIN. Never share the global Administrator password/PIN.</p><div class="copy-field"><input id="inviteLink" value="${esc(link)}" readonly><button id="copyInvite">Copy</button></div><div class="pin-box"><span>TRIP CODE<b>${esc(state.data.trip.tripId)}</b></span><span>TRAVELLER PIN<b>••••</b></span></div><small>The Traveller PIN is different for each trip and is not displayed after creation.</small></div>`);
+    $("#copyInvite").addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); } catch {} toast("Invite link copied"); });
   }
 
   function showSecurity() {
-    if (!isAdmin()) return toast("Administrator PIN required for Security settings", true);
-    showModal("Security settings", `<form class="modal-form" id="securityForm"><div class="security-note"><i>◆</i><p>Choose different PINs. The Administrator PIN controls editing, deletion, travellers and future PIN changes.</p></div><label>New Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>New Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label>${actions}</form>`);
+    if (!isAdmin()) return toast("Global Administrator access required for Security settings", true);
+    showModal("Security settings", `<form class="modal-form" id="securityForm"><div class="security-note"><i>◆</i><p>The Administrator password/PIN is global and changes access for every trip. The Traveller PIN below changes only for <b>${esc(state.data.trip.name)}</b>.</p></div><label>New global Administrator password/PIN<input name="adminPin" type="password" minlength="6" maxlength="64" autocomplete="new-password" placeholder="6–64 characters" required></label><label>New Traveller PIN for this trip<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label>${actions}</form>`);
     $("#securityForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(event.currentTarget).entries());
       if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true);
       try {
         if (!state.demoMode) await api("changePins", { tripId: state.data.trip.tripId, pin: state.pin, adminPin: values.adminPin, travellerPin: values.travellerPin });
-        state.pin = String(values.adminPin); closeModal(); toast("Both access PINs were replaced securely");
+        state.pin = String(values.adminPin); closeModal(); toast("Global Administrator access and this trip’s Traveller PIN were updated");
       } catch (error) { toast(error.message, true); }
     });
     $('[data-cancel]').addEventListener("click", closeModal);
   }
 
   function showEditTrip() {
-    if (!isAdmin()) return toast("Administrator PIN required to edit trip settings", true);
+    if (!isAdmin()) return toast("Global Administrator access required to edit trip settings", true);
     const trip = state.data.trip;
     showModal("Edit trip settings", `<form class="modal-form" id="editTripForm"><label>Trip name<input name="name" value="${esc(trip.name)}" required></label><label>Destination<input name="destination" value="${esc(trip.destination)}" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" value="${esc(trip.startDate)}" required></label><label>End date<input name="endDate" type="date" value="${esc(trip.endDate)}" required></label></div><label>Total budget (₹)<input name="budget" type="number" min="0" step="0.01" value="${esc(trip.budget)}" required></label>${actions}</form>`);
     $("#editTripForm").addEventListener("submit", async (event) => {
@@ -256,7 +301,7 @@
   }
 
   async function deleteItem(sheet, id) {
-    if (!isAdmin()) return toast("Administrator PIN required to delete records", true);
+    if (!isAdmin()) return toast("Global Administrator access required to delete records", true);
     const collection = { Itinerary: "itinerary", Places: "places", Expenses: "expenses", Members: "members" }[sheet];
     try {
       if (!state.demoMode) await api("deleteRecord", { tripId: state.data.trip.tripId, pin: state.pin, sheet, id });
@@ -281,11 +326,12 @@
   $("#joinForm").addEventListener("submit", async (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); try { const trip = await api("getTrip", { tripId: String(data.get("tripId")).trim().toUpperCase(), pin: String(data.get("pin")) }); await openTrip(trip, String(data.get("pin")), false); } catch (error) { toast(error.message, true); } });
   $("#adminDemoButton").addEventListener("click", () => openTrip(demo, "654321", true, "Sarada", "administrator"));
   $("#travellerDemoButton").addEventListener("click", () => openTrip(demo, "1234", true, "Anita", "traveller"));
+  $("#showAllTripsButton").addEventListener("click", showAllTrips);
   $("#showCreateButton").addEventListener("click", (event) => { if (!apiUrlReady()) { event.stopImmediatePropagation(); showBackendSetup(() => $("#showCreateButton").click()); } }, true);
-  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><div class="form-row"><label>Administrator PIN<input name="adminPin" type="password" inputmode="numeric" minlength="6" maxlength="8" pattern="[0-9]{6,8}" placeholder="6–8 digits" required></label><label>Traveller PIN<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label></div><p class="form-help">Use different PINs. Share only the Traveller PIN with the group.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The two PINs must be different", true); try { const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
+  $("#showCreateButton").addEventListener("click", () => { showModal("Create a new trip", `<form class="modal-form" id="createTripForm"><label>Trip name<input name="name" placeholder="e.g. Kerala family holiday" required></label><label>Destination<input name="destination" placeholder="e.g. Kochi, Kerala" required></label><div class="form-row"><label>Start date<input name="startDate" type="date" required></label><label>End date<input name="endDate" type="date" required></label></div><div class="form-row"><label>Total budget (₹)<input name="budget" type="number" min="0" value="50000" required></label><label>Your name<input name="createdBy" required></label></div><label>Global Administrator password/PIN<input name="adminPin" type="password" minlength="6" maxlength="64" autocomplete="current-password" placeholder="Same administrator access for every trip" required></label><label>Traveller PIN for this trip<input name="travellerPin" type="password" inputmode="numeric" minlength="4" maxlength="8" pattern="[0-9]{4,8}" placeholder="4–8 digits" required></label><p class="form-help">Use your one global Administrator password/PIN. Choose a different Traveller PIN for each trip and share only that PIN.</p>${actions}</form>`); $("#createTripForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget).entries()); if (values.adminPin === values.travellerPin) return toast("The Administrator secret and Traveller PIN must be different", true); try { const result = await api("createTrip", { trip: { ...values, budget: Number(values.budget) }, adminPin: values.adminPin, travellerPin: values.travellerPin }); closeModal(); await openTrip(result, values.adminPin, false, values.createdBy, "administrator"); toast(`Trip created. Code: ${result.trip.tripId}`); } catch (error) { toast(error.message, true); } }); $('[data-cancel]').addEventListener("click", closeModal); });
   $("#closeModal").addEventListener("click", closeModal); $("#modal").addEventListener("mousedown", (event) => { if (event.target === event.currentTarget) closeModal(); });
   $("#mainNav").addEventListener("click", (event) => { const button = event.target.closest("[data-tab]"); if (button) setTab(button.dataset.tab); });
-  $("#inviteButton").addEventListener("click", showInvite); $("#connectBackendButton").addEventListener("click", () => showBackendSetup()); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
+  $("#inviteButton").addEventListener("click", showInvite); $("#allTripsButton").addEventListener("click", showAllTrips); $("#connectBackendButton").addEventListener("click", () => showBackendSetup()); $("#editTripButton").addEventListener("click", showEditTrip); $("#syncButton").addEventListener("click", refreshTrip); $("#leaveTrip").addEventListener("click", () => location.reload());
   $$('[data-add]').forEach((button) => button.addEventListener("click", () => showAddModal(button.dataset.add)));
 
   const inviteQuery = new URLSearchParams(location.search);

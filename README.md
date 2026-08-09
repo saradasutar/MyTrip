@@ -10,7 +10,9 @@ MyTrip is a free shared travel planner designed for:
 ## Included features
 
 - Create a trip with destination, dates, budget and organiser
-- Join a trip using a trip code and an Administrator or Traveller PIN
+- Open every trip with one global Administrator password/PIN
+- Give every trip its own separate Traveller PIN
+- View and switch between all trips from one Administrator screen
 - Automatic role detection with permissions enforced by the Google backend
 - In-page Google backend connection and verification for existing GitHub sites
 - Share one live trip with several people
@@ -42,16 +44,18 @@ Start with `SETUP-GUIDE.md`.
 
 ## Access and security
 
-Each trip has two different PINs. The **Administrator PIN** (6–8 digits) unlocks all controls. The **Traveller PIN** (4–8 digits) allows the group to view the trip, use Google Maps, add itinerary items and expenses, and print reports. The backend checks the role again for every request, so hiding a button is not the only protection.
+MyTrip uses one **global Administrator password/PIN** (6–64 characters) for the organiser. It opens the **All trips** screen and every individual trip. Each trip has a different **Traveller PIN** (4–8 digits), so people joining one journey cannot open another journey unless you give them its PIN. The Google backend checks the role again for every request.
 
 | Capability | Administrator | Traveller |
 | --- | :---: | :---: |
+| View and switch between all trips | ✓ | — |
 | View trip, maps and reports | ✓ | ✓ |
 | Add itinerary items and expenses | ✓ | ✓ |
 | Save places and manage travellers | ✓ | — |
 | Delete records | ✓ | — |
-| Change both PINs and trip settings | ✓ | — |
+| Change the global Administrator secret | ✓ | — |
+| Change the current trip’s Traveller PIN | ✓ | — |
 
-Only SHA-256 hashes of the PINs are stored in Google Sheets. Keep the Administrator PIN private and share only the Traveller PIN with your group.
+Only SHA-256 hashes of the access secrets are stored. Keep the global Administrator password/PIN private and share only the relevant trip’s Traveller PIN.
 
 This lightweight PIN model is suitable for ordinary travel plans and expenses. Do not store passports, card numbers, passwords, medical records or other highly sensitive data in this dashboard.
