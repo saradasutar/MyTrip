@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4.3.1">
+  <link rel="stylesheet" href="styles.css?v=4.4.0">
 </head>
 <body>
   <section class="access-screen" id="accessScreen">
@@ -54,7 +54,7 @@
     <main class="workspace">
       <header class="topbar"><div class="mobile-brand"><i>↗</i> mytrip</div><div class="crumbs">My trips <b>/</b> <span id="crumbLabel">Overview</span></div><div class="top-actions"><button class="all-trips" id="allTripsButton">◆ All trips</button><span class="access-badge" id="accessBadge">ADMINISTRATOR</span><div class="avatars" id="topAvatars"></div><button class="invite" id="inviteButton">＋ Invite</button></div></header>
       <div class="content">
-        <section class="trip-heading"><div><div class="trip-status-row"><span class="trip-status" id="tripStatus">● UPCOMING TRIP</span><span class="trip-id-chip" id="tripIdChip"><small>TRIP ID</small><strong>GOA26</strong></span></div><h1 id="tripTitle">Goa, here we come!</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div class="trip-heading-actions"><button class="secondary" id="editTripButton">✎ Edit</button><button class="secondary status-control" id="tripStatusButton">Disable</button><button class="danger-button" id="deleteTripButton">Delete</button><button class="secondary" id="syncButton">↻ Refresh</button><button class="primary" data-add="plan">＋ Add plan</button></div></section>
+        <section class="trip-heading"><div><div class="trip-status-row"><span class="trip-status" id="tripStatus">● UPCOMING TRIP</span><span class="trip-id-chip" id="tripIdChip"><small>TRIP ID</small><strong>GOA26</strong></span></div><h1 id="tripTitle">Goa, here we come!</h1><p id="tripMeta">19–23 November 2026 · 4 nights · 6 travellers</p></div><div class="trip-heading-actions"><button class="primary" data-add="plan">＋ Add plan</button><details class="trip-tools"><summary>••• Manage</summary><div class="trip-tools-menu"><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary status-control" id="tripStatusButton">Disable trip</button><button class="secondary" id="syncButton">↻ Refresh data</button><button class="danger-button" id="deleteTripButton">Delete trip</button></div></details></div></section>
         <div id="view"></div>
       </div>
     </main>
@@ -64,7 +64,7 @@
   <div class="toast hidden" id="toast" role="status"></div>
   <section class="print-area" id="printArea"></section>
 
-  <script src="config.js?v=4.3.1"></script>
-  <script src="app.js?v=4.3.1"></script>
+  <script src="config.js?v=4.4.0"></script>
+  <script src="app.js?v=4.4.0"></script>
 </body>
 </html>
