@@ -16,8 +16,9 @@ MyTrip is a free shared travel planner designed for:
 - Assign multiple travellers to one trip and one traveller to multiple trips
 - View Trip IDs and switch between every trip from one Administrator screen
 - Edit, disable/enable or permanently delete a trip from the Administrator dashboard
-- Verify Google backend version 4.2 before creating or managing trips
+- Verify Google backend version 4.3 before creating or managing trips
 - Save detailed traveller profiles without assigning any trip
+- Give every traveller a separate personal PIN and add several travellers to one trip together
 - Automatic role detection with permissions enforced by the Google backend
 - In-page Google backend connection and verification for existing GitHub sites
 - Share one live trip with several people
