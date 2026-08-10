@@ -120,9 +120,9 @@ body{background:linear-gradient(135deg,#f4faf8 0%,#f8f7fc 50%,#fff8f4 100%)}
 .overview-expense strong{flex:0 0 auto;color:#102a43;font-size:12px}
 .expense-add-button{border-color:#cfc4ee;background:#faf8ff;color:#6751af}
 .empty-overview{margin:10px 0;color:#8391a0;font-size:10px;font-weight:700}
-.empty-approved-travellers{grid-column:1/-1;padding:28px;text-align:center;border:1px dashed #b9d9d1;border-radius:14px;background:#f3fbf8}
-.empty-approved-travellers b{color:#102a43;font-size:13px}
-.empty-approved-travellers p{margin:5px 0 0;color:#698077;font-size:10px;font-weight:600}
+.empty-trip-members{grid-column:1/-1;padding:28px;text-align:center;border:1px dashed #b9d9d1;border-radius:14px;background:#f3fbf8}
+.empty-trip-members b{color:#102a43;font-size:13px}
+.empty-trip-members p{margin:5px 0 0;color:#698077;font-size:10px;font-weight:600}
 .expense-summary .summary-card{position:relative;overflow:hidden;border:0;border-top:5px solid #8aa5b8}
 .expense-summary .budget-card{background:linear-gradient(145deg,#fff,#f2f8fc);border-top-color:#519fdb}
 .expense-summary .spent-card{background:linear-gradient(145deg,#fff,#fff5f1);border-top-color:#ff735c}
@@ -165,4 +165,22 @@ body{background:linear-gradient(135deg,#f4faf8 0%,#f8f7fc 50%,#fff8f4 100%)}
   .spending-breakdown{grid-template-columns:1fr 1fr}
   .overview-expense{align-items:flex-start}
   .overview-expense strong{padding-top:4px}
+}
+
+/* Version 4.5.2 · independent traveller access and clearer text */
+body{font-weight:500}
+input,select,textarea{font-weight:600}
+.sidebar nav button{font-weight:800}
+.top-trip-copy>small,.view-head p,.permission-banner p,.share-banner p,.stat span,.summary-card span,.timeline-row time,.timeline-row p,.plan-item p,.place p,.person p,.print-card p,.account-card p,.account-card small,.overview-expense small,.spending-total span{font-weight:650}
+.check-card.inactive{opacity:.7;cursor:pointer;background:#fafafa}
+.trip-access-note{margin:0;padding:10px 12px;border-left:4px solid #8268cf;border-radius:8px;background:#f7f3ff;color:#5f5577;font-size:10px;font-weight:650;line-height:1.55}
+.trip-disable-confirmation{display:grid;gap:13px}
+.trip-disable-control{border-color:#e4a49a!important;background:#fff1ee!important;color:#a94237!important;white-space:nowrap}
+.form-actions .danger-confirm{border-color:#b84a3f;background:#b84a3f;color:#fff}
+.global-profile-control[data-active="true"]{border-color:#e4a49a;background:#fff1ee;color:#a94237}
+.global-profile-control[data-active="false"]{border-color:#9acfc5;background:#eff9f6;color:#168b7b}
+button:disabled{cursor:wait;opacity:.65}
+@media(max-width:760px){
+  .trip-access-note{font-size:9px}
+  .share-banner .banner-actions button{min-height:38px}
 }
