@@ -236,7 +236,7 @@
   function renderPeople() {
     const members = visibleTripMembers();
     const totals = Object.fromEntries(members.map((member) => [member.name, state.data.expenses.filter((expense) => expense.paidBy === member.name).reduce((sum, expense) => sum + Number(expense.amount), 0)]));
-    const cards = members.map((member) => `<article class="person ${member.travellerId ? "personal-access" : "shared-only"}"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>${member.travellerId ? `Traveller ID · ${esc(member.travellerId)}` : (member.role === "Organiser" ? "Trip organiser" : "Trip member without personal PIN")}</p></div><span>${esc(member.role)}</span><div class="person-access-badge ${member.travellerId ? "enabled" : "pending"}">${isAdmin() ? (member.travellerId ? "ENABLED FOR THIS TRIP" : (member.role === "Organiser" ? "ADMIN" : "PIN REQUIRED")) : (member.travellerId ? "TRAVELLER PROFILE" : (member.role === "Organiser" ? "ORGANISER" : "TRIP MEMBER"))}</div><footer><span><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></span><span class="person-footer-actions">${isAdmin() && member.travellerId ? `<button class="pin-reset-control" data-reset-member-pin="${esc(member.id)}" aria-label="Edit PIN for ${esc(member.name)}">✎ Edit PIN</button>` : ""}${isAdmin() && !member.travellerId && member.role !== "Organiser" ? `<button class="pin-reset-control" data-give-pin="${esc(member.id)}" aria-label="Create PIN for ${esc(member.name)}">＋ Create PIN</button>` : ""}${isAdmin() && member.travellerId && member.role !== "Organiser" ? `<button class="delete-control trip-disable-control" data-disable-trip-traveller="${esc(member.travellerId)}">Disable for this trip</button>` : ""}${isAdmin() && !member.travellerId && member.role !== "Organiser" ? `<button class="delete-control" data-delete data-sheet="Members" data-id="${esc(member.id)}">Remove</button>` : ""}</span></footer></article>`).join("");
+    const cards = members.map((member) => `<article class="person ${member.travellerId ? "personal-access" : "shared-only"}"><i>${esc(initials(member.name))}</i><div><h3>${esc(member.name)}</h3><p>${member.travellerId ? `Traveller ID · ${esc(member.travellerId)}` : (member.role === "Organiser" ? "Trip organiser" : "Trip member without personal PIN")}</p></div><span>${esc(member.role)}</span><div class="person-access-badge ${member.travellerId ? "enabled" : "pending"}">${isAdmin() ? (member.travellerId ? "ENABLED FOR THIS TRIP" : (member.role === "Organiser" ? "ADMIN" : "PIN REQUIRED")) : (member.travellerId ? "TRAVELLER PROFILE" : (member.role === "Organiser" ? "ORGANISER" : "TRIP MEMBER"))}</div><footer><span><small>PAID FOR TRIP</small><b>${money.format(totals[member.name] || 0)}</b></span><span class="person-footer-actions">${isAdmin() && member.travellerId ? `<button class="pin-reset-control" data-reset-member-pin="${esc(member.id)}" aria-label="Edit PIN for ${esc(member.name)}">✎ Edit PIN</button>` : ""}${isAdmin() && !member.travellerId && member.role !== "Organiser" ? `<button class="pin-reset-control" data-give-pin="${esc(member.id)}" aria-label="Create PIN for ${esc(member.name)}">＋ Create PIN</button>` : ""}${isAdmin() && member.role !== "Organiser" ? `<button class="delete-control trip-disable-control" data-remove-trip-member="${esc(member.id)}">Remove from trip</button>` : ""}</span></footer></article>`).join("");
     return `${heading("YOUR TRAVEL GROUP", isAdmin() ? "Travellers and personal PINs" : "Travellers and trip members", isAdmin() ? "Enable or disable each traveller independently for this trip." : "The complete trip member list is shown here.", "travellers")}<div class="share-banner"><div><h3>${isAdmin() ? "Trip-specific traveller access" : `${members.length} trip ${members.length === 1 ? "member" : "members"}`}</h3><p>Trip ID <b>${esc(state.data.trip.tripId)}</b> · ${isAdmin() ? "Changes here do not affect the traveller’s other trips or personal PIN" : "Full traveller and member list"}</p></div>${isAdmin() ? `<span class="banner-actions"><button data-manage-current-trip>Manage trip access</button><button data-add="travellers">＋ Add travellers</button><button data-all-trips>All trips</button><button data-security>⚿ Security</button></span>` : `<span class="readonly-label">TRIP GROUP</span>`}</div><div class="people-grid">${cards || `<div class="empty-trip-members"><b>No trip members yet</b><p>No traveller or member has been added to this trip.</p></div>`}</div>`;
   }
 
@@ -263,7 +263,7 @@
     $$('[data-give-pin]').forEach((button) => button.addEventListener("click", () => showAddTravellersToCurrentTrip(state.data.members.find((member) => String(member.id) === String(button.dataset.givePin)))));
     $$('[data-reset-member-pin]').forEach((button) => button.addEventListener("click", () => showResetCurrentTravellerPin(state.data.members.find((member) => String(member.id) === String(button.dataset.resetMemberPin)))));
     $$('[data-manage-current-trip]').forEach((button) => button.addEventListener("click", showCurrentTripTravellerAccess));
-    $$('[data-disable-trip-traveller]').forEach((button) => button.addEventListener("click", () => showDisableTravellerForCurrentTrip(state.data.members.find((member) => String(member.travellerId) === String(button.dataset.disableTripTraveller)))));
+    $$('[data-remove-trip-member]').forEach((button) => button.addEventListener("click", () => showRemoveTravellerFromCurrentTrip(state.data.members.find((member) => String(member.id) === String(button.dataset.removeTripMember)))));
     $$('[data-delete]').forEach((button) => button.addEventListener("click", () => deleteItem(button.dataset.sheet, button.dataset.id)));
     if ($("#mapSearchButton")) $("#mapSearchButton").addEventListener("click", () => { state.mapQuery = $("#mapQuery").value.trim() || state.data.trip.destination; openMap(state.mapQuery); render(); });
   }
@@ -487,17 +487,27 @@
     } catch (error) { toast(error.message, true); }
   }
 
-  function showDisableTravellerForCurrentTrip(member) {
+  function showRemoveTravellerFromCurrentTrip(member) {
     if (!isAdmin()) return toast("Administrator access required", true);
-    if (!member || !member.travellerId) return toast("Traveller profile not found", true);
-    showModal("Disable for this trip", `<div class="trip-disable-confirmation"><div class="security-note traveller-note"><i>♙</i><p><b>${esc(member.name)}</b> will no longer be able to open <b>${esc(state.data.trip.name)}</b>.</p></div><p class="trip-access-note">Their Traveller ID, personal PIN, permanent profile and access to every other assigned trip will remain unchanged. You can enable this trip again from <b>Manage trip access</b>.</p><div class="form-actions"><button type="button" data-cancel>Cancel</button><button class="danger-confirm" id="confirmDisableTripTraveller" type="button">Disable only this trip</button></div></div>`);
-    $("#confirmDisableTripTraveller").addEventListener("click", async (event) => {
-      const button = event.currentTarget; button.disabled = true; button.textContent = "Disabling…";
+    if (!member) return toast("Traveller not found", true);
+    if (member.role === "Organiser") return toast("The trip organiser cannot be removed", true);
+    const profileNote = member.travellerId
+      ? "Their permanent traveller profile, personal PIN and access to every other trip will remain unchanged. You can add them to this trip again from Manage trip access."
+      : "Only this trip-member entry will be removed.";
+    showModal("Remove traveller from trip", `<div class="trip-disable-confirmation"><div class="danger-note"><b>Remove from this trip only</b><p><strong>${esc(member.name)}</strong> will be removed from <strong>${esc(state.data.trip.name)}</strong>.</p></div><p class="trip-access-note">${profileNote} Existing expense records paid by ${esc(member.name)} will remain in the expense statement.</p><div class="form-actions"><button type="button" data-cancel>Cancel</button><button class="danger-confirm" id="confirmRemoveTripTraveller" type="button">Remove from trip</button></div></div>`);
+    $("#confirmRemoveTripTraveller").addEventListener("click", async (event) => {
+      const button = event.currentTarget; button.disabled = true; button.textContent = "Removing…";
       try {
-        if (state.demoMode) { const selected = currentTripTravellerIds(); selected.delete(String(member.travellerId).trim().toUpperCase()); updateDemoCurrentTripAssignments(selected); }
-        else { await api("removeTravellerAssignment", authPayload({ travellerId: member.travellerId })); await reloadCurrentTripAccess(); }
-        closeModal(); hydrateShell(); render(); updatePrintArea(); toast(`${member.name} disabled only for ${state.data.trip.tripId}. Other trips are unchanged.`);
-      } catch (error) { button.disabled = false; button.textContent = "Disable only this trip"; toast(error.message, true); }
+        if (state.demoMode) {
+          if (member.travellerId) { const selected = currentTripTravellerIds(); selected.delete(String(member.travellerId).trim().toUpperCase()); updateDemoCurrentTripAssignments(selected); }
+          else state.data.members = state.data.members.filter((item) => String(item.id) !== String(member.id));
+        } else {
+          if (member.travellerId && currentTripTravellerIds().has(String(member.travellerId).trim().toUpperCase())) await api("removeTravellerAssignment", authPayload({ travellerId: member.travellerId }));
+          else await api("deleteRecord", authPayload({ sheet: "Members", id: member.id }));
+          await reloadCurrentTripAccess();
+        }
+        closeModal(); hydrateShell(); render(); updatePrintArea(); toast(`${member.name} removed from ${state.data.trip.tripId}. Profile and other trips are unchanged.`);
+      } catch (error) { button.disabled = false; button.textContent = "Remove from trip"; toast(error.message, true); }
     });
     $('[data-cancel]').addEventListener("click", closeModal);
   }
