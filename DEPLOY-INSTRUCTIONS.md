@@ -1,11 +1,15 @@
-# MyTrip Dashboard 4.6.1
+# MyTrip Dashboard 4.6.2
 
 This version adds a separate travel-journal section for experience notes with the writer’s name.
+
+If your Google backend already reports **v4.4.0**, the traveller-wise expense summary needs only the updated frontend files; no further backend change is required.
 
 ## What changed
 
 - Added **Trip experience notes** below the day-by-day itinerary.
 - Added a prominent **Add experience** shortcut on the Overview dashboard and renamed the navigation item **Itinerary & Notes** so the journal is easy to find.
+- Added a **Traveller-wise expense totals** section showing every trip member’s total paid amount, payment count and percentage of total spending.
+- Added the same traveller-wise totals to Expense and Complete Trip Book printouts.
 - Every experience records its date, optional place, full note and **Written by** name.
 - Admin and travellers can add and edit experience notes.
 - The Administrator can delete an experience note.

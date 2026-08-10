@@ -222,3 +222,32 @@ button:disabled{cursor:wait;opacity:.65}
   .print-experiences strong{font-size:8px;color:#b55243}
   body[data-print=expenses] .print-experiences{display:none}
 }
+
+/* Version 4.6.2 · traveller-wise expense totals */
+.traveller-expense-panel{margin:0 0 12px;padding:16px 18px;border-top:5px solid #8268cf;border-radius:15px;background:linear-gradient(145deg,#fff,#f8f5ff);box-shadow:0 7px 24px rgba(16,42,67,.07)}
+.traveller-expense-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.traveller-expense-heading h2{margin:3px 0;color:#102a43;font:700 23px/1.15 "Playfair Display",Georgia,serif}
+.traveller-expense-heading p{margin:0;color:#738190;font-size:9px;font-weight:650}
+.traveller-expense-heading>strong{flex:0 0 auto;padding:7px 10px;border-radius:9px;background:#eee9fc;color:#6650ae;font-size:11px;font-weight:900}
+.traveller-expense-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.traveller-expense-card{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:9px;padding:11px;border:1px solid #e6e0f5;border-radius:11px;background:#fff}
+.traveller-expense-card>i{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(145deg,#8268cf,#6650ae);color:#fff;font-size:9px;font-style:normal;font-weight:900}
+.traveller-expense-card>div{display:flex;min-width:0;flex-direction:column}
+.traveller-expense-card b{overflow:hidden;color:#102a43;font-size:10px;font-weight:850;text-overflow:ellipsis;white-space:nowrap}
+.traveller-expense-card small{margin:2px 0 5px;color:#8793a1;font-size:8px;font-weight:650}
+.traveller-expense-card div>span{height:4px;overflow:hidden;border-radius:5px;background:#eceff2}
+.traveller-expense-card div>span em{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#8268cf,#ff8068)}
+.traveller-expense-card>strong{color:#102a43;font-size:12px;font-weight:900;white-space:nowrap}
+.traveller-expense-card:nth-child(3n+2)>i{background:linear-gradient(145deg,#20a68f,#168879)}
+.traveller-expense-card:nth-child(3n)>i{background:linear-gradient(145deg,#519fdb,#397aad)}
+@media(max-width:1000px){.traveller-expense-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .traveller-expense-panel{padding:13px}
+  .traveller-expense-heading{align-items:flex-start;flex-direction:column}
+  .traveller-expense-grid{grid-template-columns:1fr}
+}
+@media print{
+  .print-traveller-totals{margin-top:16px;break-inside:avoid}
+  .print-expenses>h3,.print-traveller-totals h3{margin:16px 0 5px;color:#17263c;font-size:12px}
+  .print-traveller-totals table{margin-top:5px}
+}
