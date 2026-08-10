@@ -142,10 +142,6 @@
   function visibleTripMembers() { return state.data ? state.data.members : []; }
   function expenseTotalsByTraveller() {
     const totals = new Map();
-    visibleTripMembers().forEach((member) => {
-      const name = String(member.name || "").trim();
-      if (name && !totals.has(name.toLowerCase())) totals.set(name.toLowerCase(), { name, total: 0, count: 0 });
-    });
     state.data.expenses.forEach((expense) => {
       const name = String(expense.paidBy || "Not specified").trim() || "Not specified";
       const key = name.toLowerCase();
@@ -154,7 +150,7 @@
       row.total += Number(expense.amount || 0);
       row.count += 1;
     });
-    return [...totals.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    return [...totals.values()].filter((row) => row.total > 0).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
   }
 
   async function openTrip(data, pin, demoMode, name, roleOverride, travellerId = "", loginMode = "trip") {
