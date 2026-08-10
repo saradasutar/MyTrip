@@ -1,4 +1,4 @@
-# MyTrip Dashboard 4.5
+# MyTrip Dashboard 4.5.1
 
 This version keeps the existing multi-traveller access system and makes the Overview page more compact.
 
@@ -10,6 +10,9 @@ This version keeps the existing multi-traveller access system and makes the Over
 - Moved trip management controls into the **Manage** menu in the top header.
 - Reworked the spending section with clearer Budget, Total Expenses and Balance figures.
 - Improved recent-expense rows with category, date, payer and amount.
+- Traveller accounts now show only the travellers assigned to that trip by the Administrator.
+- Unassigned names and Traveller IDs are hidden from traveller accounts.
+- The expense payer list in traveller access contains only approved trip members.
 
 ## Update GitHub Pages
 

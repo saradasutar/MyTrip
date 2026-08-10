@@ -120,6 +120,9 @@ body{background:linear-gradient(135deg,#f4faf8 0%,#f8f7fc 50%,#fff8f4 100%)}
 .overview-expense strong{flex:0 0 auto;color:#102a43;font-size:12px}
 .expense-add-button{border-color:#cfc4ee;background:#faf8ff;color:#6751af}
 .empty-overview{margin:10px 0;color:#8391a0;font-size:10px;font-weight:700}
+.empty-approved-travellers{grid-column:1/-1;padding:28px;text-align:center;border:1px dashed #b9d9d1;border-radius:14px;background:#f3fbf8}
+.empty-approved-travellers b{color:#102a43;font-size:13px}
+.empty-approved-travellers p{margin:5px 0 0;color:#698077;font-size:10px;font-weight:600}
 .expense-summary .summary-card{position:relative;overflow:hidden;border:0;border-top:5px solid #8aa5b8}
 .expense-summary .budget-card{background:linear-gradient(145deg,#fff,#f2f8fc);border-top-color:#519fdb}
 .expense-summary .spent-card{background:linear-gradient(145deg,#fff,#fff5f1);border-top-color:#ff735c}
