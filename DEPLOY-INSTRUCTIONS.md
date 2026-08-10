@@ -1,10 +1,11 @@
-# MyTrip Dashboard 4.6.0
+# MyTrip Dashboard 4.6.1
 
 This version adds a separate travel-journal section for experience notes with the writer’s name.
 
 ## What changed
 
 - Added **Trip experience notes** below the day-by-day itinerary.
+- Added a prominent **Add experience** shortcut on the Overview dashboard and renamed the navigation item **Itinerary & Notes** so the journal is easy to find.
 - Every experience records its date, optional place, full note and **Written by** name.
 - Admin and travellers can add and edit experience notes.
 - The Administrator can delete an experience note.
@@ -39,4 +40,4 @@ Wait about two minutes and refresh the page. On a phone, close the old tab and o
 
 ## Check the update
 
-The login page should show **Google backend connected · v4.4.0**. Open a trip, select **Itinerary**, and use **Add experience note**.
+The login page should show **Google backend connected · v4.4.0**. Open a trip and use **Add experience** on the Overview dashboard, or select **Itinerary & Notes** and use **Add experience note**.
