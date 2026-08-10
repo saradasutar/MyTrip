@@ -3,7 +3,7 @@
 
   const config = window.MYTRIP_CONFIG || {};
   const apiStorageKey = "mytrip_google_backend_url";
-  const requiredBackendVersion = "4.3.0";
+  const requiredBackendVersion = "4.4.0";
   const validApiUrl = (value) => /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(value || "").trim());
   function readStoredApiUrl() { try { return localStorage.getItem(apiStorageKey) || ""; } catch { return ""; } }
   function saveStoredApiUrl(value) { try { localStorage.setItem(apiStorageKey, value); } catch {} }
@@ -34,6 +34,10 @@
       { id: "i3", date: "2026-11-20", time: "09:00", title: "Old Goa churches", place: "Basilica of Bom Jesus", notes: "Visit the Basilica and Sé Cathedral before lunch." },
       { id: "i4", date: "2026-11-20", time: "14:30", title: "Divar Island ferry", place: "Old Goa Ferry Terminal", notes: "Keep one hour for the village lanes and river views." },
       { id: "i5", date: "2026-11-21", time: "08:00", title: "South Goa beach day", place: "Palolem Beach", notes: "Breakfast en route; sunset from the north end." }
+    ],
+    experiences: [
+      { id: "x1", date: "2026-11-19", place: "Fontainhas, Panjim", note: "The colourful lanes were peaceful in the late afternoon. The local guide’s stories made the heritage walk memorable.", writer: "Anita", createdAt: "2026-11-19T18:30:00.000Z" },
+      { id: "x2", date: "2026-11-20", place: "Divar Island", note: "The ferry ride and quiet village roads were the highlight of the day.", writer: "Rohan", createdAt: "2026-11-20T17:15:00.000Z" }
     ],
     places: [
       { id: "p1", name: "Fontainhas", area: "Panjim", category: "Culture", plannedDay: "Day 1" },
@@ -128,18 +132,19 @@
   }
 
   function normalize(data) {
-    return { trip: data.trip || {}, members: data.members || [], assignments: data.assignments || [], places: data.places || [], itinerary: data.itinerary || [], expenses: (data.expenses || []).map((item) => ({ ...item, amount: Number(item.amount || 0) })) };
+    return { trip: data.trip || {}, members: data.members || [], assignments: data.assignments || [], places: data.places || [], itinerary: data.itinerary || [], experiences: data.experiences || [], expenses: (data.expenses || []).map((item) => ({ ...item, amount: Number(item.amount || 0) })) };
   }
 
   function isAdmin() { return state.accessRole === "administrator"; }
-  function canAdd(type) { return ["plan", "place", "expense"].includes(type) || isAdmin(); }
+  function canAdd(type) { return ["plan", "place", "expense", "experience"].includes(type) || isAdmin(); }
   function canEditRecords() { return isAdmin() || state.permissions.editRecords !== false; }
   function authPayload(payload = {}) { return { tripId: state.data.trip.tripId, pin: state.pin, ...(state.travellerId ? { travellerId: state.travellerId } : {}), ...payload }; }
   function visibleTripMembers() { return state.data ? state.data.members : []; }
 
   async function openTrip(data, pin, demoMode, name, roleOverride, travellerId = "", loginMode = "trip") {
-    state.data = normalize(clone(data)); state.pin = pin; state.demoMode = demoMode; state.currentUser = name || data.trip.createdBy || "Traveller";
+    state.data = normalize(clone(data)); state.pin = pin; state.demoMode = demoMode;
     state.accessRole = roleOverride || data.accessRole || "traveller";
+    state.currentUser = name || (state.accessRole === "administrator" ? (data.trip.createdBy || "Administrator") : "Traveller");
     state.travellerId = travellerId; state.loginMode = loginMode;
     state.permissions = data.permissions || {};
     $("#accessScreen").classList.add("hidden"); $("#dashboard").classList.remove("hidden");
@@ -193,7 +198,9 @@
 
   function renderItinerary() {
     const items = [...state.data.itinerary].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
-    return `${heading("DAY BY DAY", "Trip itinerary", "Admin and travellers can add plans, then update the experience note during the visit.", "plan")}<div class="filter-row"><button class="active">All days</button>${[...new Set(items.map((item) => item.date))].map((date) => `<button>${displayDate(date, { weekday: "short", day: "numeric" })}</button>`).join("")}</div><div class="plan-list">${items.map((item) => `<article class="plan-item"><span class="date"><small>${displayDate(item.date, { weekday: "short" }).toUpperCase()}</small><b>${displayDate(item.date, { day: "2-digit" })}</b></span><time>${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}" target="_blank" rel="noreferrer">⌖ ${esc(item.place)}</a><p>${esc(item.notes || "")}</p></div><span class="record-actions">${canEditRecords() ? `<button class="edit-control" data-edit data-sheet="Itinerary" data-id="${esc(item.id)}">Edit</button>` : ""}${isAdmin() ? `<button class="delete-control" data-delete data-sheet="Itinerary" data-id="${esc(item.id)}">Delete</button>` : ""}</span></article>`).join("")}</div>`;
+    const experiences = [...state.data.experiences].sort((a, b) => `${a.date}${a.createdAt || ""}`.localeCompare(`${b.date}${b.createdAt || ""}`));
+    const experienceCards = experiences.map((item) => `<article class="experience-card"><div class="experience-date"><small>${displayDate(item.date, { weekday: "short" }).toUpperCase()}</small><b>${displayDate(item.date, { day: "2-digit" })}</b><span>${displayDate(item.date, { month: "short" })}</span></div><div class="experience-copy"><span class="experience-place">${item.place ? `⌖ ${esc(item.place)}` : "TRIP MEMORY"}</span><p>${esc(item.note)}</p><strong>✍ Written by ${esc(item.writer || "Trip member")}</strong></div><span class="record-actions">${canEditRecords() ? `<button class="edit-control" data-edit data-sheet="ExperienceNotes" data-id="${esc(item.id)}">Edit</button>` : ""}${isAdmin() ? `<button class="delete-control" data-delete data-sheet="ExperienceNotes" data-id="${esc(item.id)}">Delete</button>` : ""}</span></article>`).join("");
+    return `${heading("DAY BY DAY", "Trip itinerary", "Plan each day, then keep separate experience notes with the writer’s name.", "plan")}<div class="filter-row"><button class="active">All days</button>${[...new Set(items.map((item) => item.date))].map((date) => `<button>${displayDate(date, { weekday: "short", day: "numeric" })}</button>`).join("")}</div><div class="plan-list">${items.map((item) => `<article class="plan-item"><span class="date"><small>${displayDate(item.date, { weekday: "short" }).toUpperCase()}</small><b>${displayDate(item.date, { day: "2-digit" })}</b></span><time>${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}" target="_blank" rel="noreferrer">⌖ ${esc(item.place)}</a><p>${esc(item.notes || "")}</p></div><span class="record-actions">${canEditRecords() ? `<button class="edit-control" data-edit data-sheet="Itinerary" data-id="${esc(item.id)}">Edit</button>` : ""}${isAdmin() ? `<button class="delete-control" data-delete data-sheet="Itinerary" data-id="${esc(item.id)}">Delete</button>` : ""}</span></article>`).join("") || `<div class="empty-trip-members"><b>No itinerary added yet</b><p>Add the first plan for this trip.</p></div>`}</div><section class="experience-section"><div class="experience-heading"><div><span class="kicker">TRAVEL JOURNAL</span><h2>Trip experience notes</h2><p>Write what happened, where it happened and who wrote it.</p></div><button class="primary" data-add="experience">＋ Add experience note</button></div><div class="experience-list">${experienceCards || `<div class="empty-experiences"><b>No experience notes yet</b><p>During the visit, admin or travellers can add a memory here with the writer’s name.</p></div>`}</div></section>`;
   }
 
   function renderPlaces() {
@@ -213,7 +220,7 @@
   }
 
   function renderPrint() {
-    return `${heading("READY FOR PAPER", "Print and export", "Create a clean A4 copy or save any report as PDF.")}<div class="print-grid"><article class="print-card"><i>▦</i><h3>Itinerary only</h3><p>Day-by-day plan, timings, places and notes.</p><button data-print="plan">Print itinerary →</button></article><article class="print-card"><i>₹</i><h3>Expenses only</h3><p>Budget summary and every expense entry.</p><button data-print="expenses">Print expenses →</button></article><article class="print-card"><i>▤</i><h3>Complete trip book</h3><p>Trip overview, full plan and expense statement.</p><button data-print="full">Print everything →</button></article></div>`;
+    return `${heading("READY FOR PAPER", "Print and export", "Create a clean A4 copy or save any report as PDF.")}<div class="print-grid"><article class="print-card"><i>▦</i><h3>Itinerary & experiences</h3><p>Day-by-day plan plus every experience note and writer’s name.</p><button data-print="plan">Print itinerary →</button></article><article class="print-card"><i>₹</i><h3>Expenses only</h3><p>Budget summary and every expense entry.</p><button data-print="expenses">Print expenses →</button></article><article class="print-card"><i>▤</i><h3>Complete trip book</h3><p>Trip overview, full plan, experiences and expense statement.</p><button data-print="full">Print everything →</button></article></div>`;
   }
 
   function render() {
@@ -262,7 +269,7 @@
   }
 
   function showBackendSetup(afterConnect) {
-    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>MyTrip backend version 4.3 required</b><p>Replace your Apps Script <code>Code.gs</code>, run <code>setupMyTrip()</code>, and deploy a <b>New version</b>. Version 4.3 gives every traveller separate personal access and supports adding several travellers to one trip.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection and backend version are checked before they are saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test version 4.3 & connect</button></div></form>`);
+    showModal("Connect Google backend", `<form class="modal-form" id="backendForm"><div class="setup-note"><i>G</i><div><b>MyTrip backend version 4.4 required</b><p>Replace your Apps Script <code>Code.gs</code>, run <code>setupMyTrip()</code>, and deploy a <b>New version</b>. Version 4.4 adds writer-attributed experience notes while preserving traveller profiles and trip access controls.</p></div></div><label>Google Apps Script Web App URL<input name="apiUrl" type="url" value="${esc(apiUrl)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="url" required></label><p class="form-help">Use the deployed <b>/exec</b> URL, not the testing <b>/dev</b> URL. The connection and backend version are checked before they are saved.</p><a class="setup-guide-link" href="SETUP-GUIDE.md" target="_blank" rel="noreferrer">Open the Google setup guide ↗</a><div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Test version 4.4 & connect</button></div></form>`);
     const form = $("#backendForm");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -278,7 +285,7 @@
         backendState = error.code === "BACKEND_UPGRADE_REQUIRED" ? "outdated" : "error";
         updateBackendStatus();
         toast(error.code === "BACKEND_UPGRADE_REQUIRED" ? error.message : `Could not connect: ${error.message}`, true);
-        submit.disabled = false; submit.textContent = "Test version 4.3 & connect";
+        submit.disabled = false; submit.textContent = "Test version 4.4 & connect";
       }
     });
     $('[data-cancel]').addEventListener("click", closeModal);
@@ -632,7 +639,12 @@
   function showAddModal(type) {
     if (!canAdd(type)) return toast("Global Administrator access required for this action", true);
     if (type === "travellers") return showAddTravellersToCurrentTrip();
-    if (type === "plan") showModal("Add to itinerary", `<form class="modal-form" data-form="plan"><label>Plan title<input name="title" placeholder="e.g. Sunset cruise" required></label><div class="form-row"><label>Date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Time<input name="time" type="time" value="10:00" required></label></div><label>Place<input name="place" placeholder="Place or address" required></label><label>Plan / experience note<textarea name="notes" rows="4" placeholder="Before visit: tickets or reminders. During visit: what you experienced, highlights and useful details."></textarea></label>${actions}</form>`);
+    if (type === "plan") showModal("Add to itinerary", `<form class="modal-form" data-form="plan"><label>Plan title<input name="title" placeholder="e.g. Sunset cruise" required></label><div class="form-row"><label>Date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Time<input name="time" type="time" value="10:00" required></label></div><label>Place<input name="place" placeholder="Place or address" required></label><label>Planning note<textarea name="notes" rows="3" placeholder="Tickets, reminders, meeting point or other preparation"></textarea></label>${actions}</form>`);
+    if (type === "experience") {
+      const writer = state.currentUser === "Traveller" ? "" : state.currentUser;
+      const writerNames = [...new Set(visibleTripMembers().map((member) => member.name).filter(Boolean))];
+      showModal("Add experience note", `<form class="modal-form" data-form="experience"><div class="security-note traveller-note"><i>✍</i><p>This note will appear below the itinerary and in the printed trip book with the writer’s name.</p></div><div class="form-row"><label>Experience date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(state.data.trip.startDate)}" required></label><label>Place <small>(optional)</small><input name="place" maxlength="180" placeholder="e.g. Padmanabhaswamy Temple"></label></div><label>Experience note<textarea name="note" rows="5" maxlength="4000" placeholder="What happened? What did you enjoy, learn or want to remember?" required></textarea></label><label>Written by<input name="writer" list="experienceWriterNames" maxlength="80" value="${esc(writer)}" placeholder="Enter the writer’s name" required><datalist id="experienceWriterNames">${writerNames.map((name) => `<option value="${esc(name)}"></option>`).join("")}</datalist></label>${actions}</form>`);
+    }
     if (type === "place") showModal("Save a place", `<form class="modal-form" data-form="place"><label>Place name<input name="name" placeholder="e.g. Dudhsagar Falls" required></label><label>Area or address<input name="area" placeholder="Goa" required></label><div class="form-row"><label>Category<select name="category"><option>Beach</option><option>Food</option><option>Culture</option><option>Nature</option><option>Shopping</option><option>Stay</option></select></label><label>Plan for<select name="plannedDay"><option>Unplanned</option><option>Day 1</option><option>Day 2</option><option>Day 3</option><option>Day 4</option><option>Day 5</option></select></label></div>${actions}</form>`);
     if (type === "expense") { const payers = visibleTripMembers(); showModal("Add an expense", `<form class="modal-form" data-form="expense"><label>What was it for?<input name="label" placeholder="e.g. Dinner at Fisherman’s Wharf" required></label><div class="form-row"><label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" required></label><label>Date<input name="date" type="date" value="${esc(state.data.trip.startDate)}" required></label></div><div class="form-row"><label>Category<select name="category"><option>Food</option><option>Stay</option><option>Travel</option><option>Local travel</option><option>Activities</option><option>Shopping</option><option>Other</option></select></label><label>Paid by<select name="paidBy">${(payers.length ? payers : [{ name: state.currentUser }]).map((member) => `<option>${esc(member.name)}</option>`).join("")}</select></label></div>${actions}</form>`); }
     if (type === "traveller") showModal("Add a traveller", `<form class="modal-form" data-form="member"><label>Name<input name="name" placeholder="Traveller’s name" required></label><label>Access role<select name="role"><option>Editor</option><option>Viewer</option></select></label>${actions}</form>`);
@@ -644,11 +656,11 @@
     const form = event.currentTarget, type = form.dataset.form, values = Object.fromEntries(new FormData(form).entries());
     if (!canAdd(type)) return toast("Global Administrator access required for this action", true);
     const record = { id: uid(), ...values }; if (type === "expense") record.amount = Number(record.amount);
-    record.createdBy = state.currentUser;
-    const collection = { plan: "itinerary", place: "places", expense: "expenses", member: "members" }[type];
+    record.createdBy = type === "experience" ? values.writer : state.currentUser;
+    const collection = { plan: "itinerary", place: "places", expense: "expenses", experience: "experiences", member: "members" }[type];
     try {
       if (!state.demoMode) await api(`add${type[0].toUpperCase()}${type.slice(1)}`, authPayload({ record }));
-      state.data[collection].push(record); closeModal(); render(); hydrateShell(); updatePrintArea(); toast(`${type === "member" ? "Traveller" : type[0].toUpperCase() + type.slice(1)} saved for everyone`);
+      state.data[collection].push(record); closeModal(); render(); hydrateShell(); updatePrintArea(); toast(type === "experience" ? `Experience note saved · Written by ${values.writer}` : `${type === "member" ? "Traveller" : type[0].toUpperCase() + type.slice(1)} saved for everyone`);
     } catch (error) { toast(error.message, true); }
   }
 
@@ -704,14 +716,15 @@
 
   function showEditRecord(sheet, id) {
     if (!canEditRecords()) return toast("You do not have permission to edit this record", true);
-    const collection = { Itinerary: "itinerary", Places: "places", Expenses: "expenses" }[sheet];
+    const collection = { Itinerary: "itinerary", ExperienceNotes: "experiences", Places: "places", Expenses: "expenses" }[sheet];
     const record = collection && state.data[collection].find((item) => String(item.id) === String(id));
     if (!record) return toast("Record not found", true);
     let fields = "";
-    if (sheet === "Itinerary") fields = `<label>Plan title<input name="title" value="${esc(record.title)}" required></label><div class="form-row"><label>Date<input name="date" type="date" value="${esc(record.date)}" required></label><label>Time<input name="time" type="time" value="${esc(record.time)}" required></label></div><label>Place<input name="place" value="${esc(record.place)}" required></label><label>Plan / experience note<textarea name="notes" rows="4" placeholder="Add the experience, highlights or useful details from the visit">${esc(record.notes || "")}</textarea></label>`;
+    if (sheet === "Itinerary") fields = `<label>Plan title<input name="title" value="${esc(record.title)}" required></label><div class="form-row"><label>Date<input name="date" type="date" value="${esc(record.date)}" required></label><label>Time<input name="time" type="time" value="${esc(record.time)}" required></label></div><label>Place<input name="place" value="${esc(record.place)}" required></label><label>Planning note<textarea name="notes" rows="3">${esc(record.notes || "")}</textarea></label>`;
+    if (sheet === "ExperienceNotes") fields = `<div class="form-row"><label>Experience date<input name="date" type="date" min="${esc(state.data.trip.startDate)}" max="${esc(state.data.trip.endDate)}" value="${esc(record.date)}" required></label><label>Place <small>(optional)</small><input name="place" maxlength="180" value="${esc(record.place || "")}"></label></div><label>Experience note<textarea name="note" rows="5" maxlength="4000" required>${esc(record.note || "")}</textarea></label><label>Written by<input name="writer" maxlength="80" value="${esc(record.writer || "")}" required></label>`;
     if (sheet === "Places") fields = `<label>Place name<input name="name" value="${esc(record.name)}" required></label><label>Area or address<input name="area" value="${esc(record.area || "")}"></label><div class="form-row"><label>Category<input name="category" value="${esc(record.category || "")}"></label><label>Planned day<input name="plannedDay" value="${esc(record.plannedDay || "Unplanned")}"></label></div><label>Notes<textarea name="notes" rows="3">${esc(record.notes || "")}</textarea></label>`;
     if (sheet === "Expenses") fields = `<label>Expense description<input name="label" value="${esc(record.label)}" required></label><div class="form-row"><label>Amount<input name="amount" type="number" min="0.01" step="0.01" value="${esc(record.amount)}" required></label><label>Date<input name="date" type="date" value="${esc(record.date)}" required></label></div><div class="form-row"><label>Category<input name="category" value="${esc(record.category || "")}"></label><label>Paid by<input name="paidBy" value="${esc(record.paidBy || "")}" required></label></div><label>Notes<textarea name="notes" rows="3">${esc(record.notes || "")}</textarea></label>`;
-    showModal(`Edit ${sheet === "Itinerary" ? "plan" : sheet.slice(0, -1).toLowerCase()}`, `<form class="modal-form" id="editRecordForm">${fields}<div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save changes</button></div></form>`);
+    showModal(sheet === "ExperienceNotes" ? "Edit experience note" : `Edit ${sheet === "Itinerary" ? "plan" : sheet.slice(0, -1).toLowerCase()}`, `<form class="modal-form" id="editRecordForm">${fields}<div class="form-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Save changes</button></div></form>`);
     $("#editRecordForm").addEventListener("submit", async (event) => {
       event.preventDefault(); const update = Object.fromEntries(new FormData(event.currentTarget).entries()); if (sheet === "Expenses") update.amount = Number(update.amount);
       try {
@@ -724,7 +737,7 @@
 
   async function deleteItem(sheet, id) {
     if (!isAdmin()) return toast("Global Administrator access required to delete records", true);
-    const collection = { Itinerary: "itinerary", Places: "places", Expenses: "expenses", Members: "members" }[sheet];
+    const collection = { Itinerary: "itinerary", ExperienceNotes: "experiences", Places: "places", Expenses: "expenses", Members: "members" }[sheet];
     try {
       if (!state.demoMode) await api("deleteRecord", authPayload({ sheet, id }));
       state.data[collection] = state.data[collection].filter((item) => String(item.id) !== String(id));
@@ -734,7 +747,8 @@
 
   function updatePrintArea() {
     if (!state.data) return; const budget = Number(state.data.trip.budget || 0), members = visibleTripMembers();
-    $("#printArea").innerHTML = `<header><div><span class="kicker">MYTRIP · TRIP BOOK</span><h1>${esc(state.data.trip.name)}</h1><p>${displayDate(state.data.trip.startDate)}–${displayDate(state.data.trip.endDate)} · ${members.length} trip members</p></div><b>${esc(state.data.trip.tripId)}</b></header><section class="print-plan"><h2>Itinerary</h2>${[...state.data.itinerary].sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((item) => `<article><time>${displayDate(item.date, { weekday:"short", day:"2-digit", month:"short" })} · ${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><span>${esc(item.place)}</span><p>${esc(item.notes || "")}</p></div></article>`).join("")}</section><section class="print-expenses"><h2>Expense statement</h2><div class="print-totals"><span><small>Budget</small><b>${money.format(budget)}</b></span><span><small>Spent</small><b>${money.format(spent())}</b></span><span><small>Balance</small><b>${money.format(remaining())}</b></span></div><table><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Paid by</th><th>Amount</th></tr></thead><tbody>${state.data.expenses.map((expense) => `<tr><td>${displayDate(expense.date)}</td><td>${esc(expense.label)}</td><td>${esc(expense.category)}</td><td>${esc(expense.paidBy)}</td><td>${money.format(expense.amount)}</td></tr>`).join("")}</tbody></table></section>`;
+    const printedExperiences = [...state.data.experiences].sort((a,b)=>`${a.date}${a.createdAt || ""}`.localeCompare(`${b.date}${b.createdAt || ""}`)).map((item) => `<article><time>${displayDate(item.date, { weekday:"short", day:"2-digit", month:"short" })}</time><div><h3>${esc(item.place || "Trip experience")}</h3><p>${esc(item.note)}</p><strong>Written by ${esc(item.writer || "Trip member")}</strong></div></article>`).join("");
+    $("#printArea").innerHTML = `<header><div><span class="kicker">MYTRIP · TRIP BOOK</span><h1>${esc(state.data.trip.name)}</h1><p>${displayDate(state.data.trip.startDate)}–${displayDate(state.data.trip.endDate)} · ${members.length} trip members</p></div><b>${esc(state.data.trip.tripId)}</b></header><section class="print-plan"><h2>Itinerary</h2>${[...state.data.itinerary].sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((item) => `<article><time>${displayDate(item.date, { weekday:"short", day:"2-digit", month:"short" })} · ${displayTime(item.time)}</time><div><h3>${esc(item.title)}</h3><span>${esc(item.place)}</span><p>${esc(item.notes || "")}</p></div></article>`).join("")}</section><section class="print-experiences"><h2>Trip experience notes</h2>${printedExperiences || `<p>No experience notes were added.</p>`}</section><section class="print-expenses"><h2>Expense statement</h2><div class="print-totals"><span><small>Budget</small><b>${money.format(budget)}</b></span><span><small>Spent</small><b>${money.format(spent())}</b></span><span><small>Balance</small><b>${money.format(remaining())}</b></span></div><table><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Paid by</th><th>Amount</th></tr></thead><tbody>${state.data.expenses.map((expense) => `<tr><td>${displayDate(expense.date)}</td><td>${esc(expense.label)}</td><td>${esc(expense.category)}</td><td>${esc(expense.paidBy)}</td><td>${money.format(expense.amount)}</td></tr>`).join("")}</tbody></table></section>`;
   }
 
   function printReport(target) { document.body.dataset.print = target; updatePrintArea(); const clear = () => { delete document.body.dataset.print; removeEventListener("afterprint", clear); }; addEventListener("afterprint", clear); print(); setTimeout(clear, 1200); }

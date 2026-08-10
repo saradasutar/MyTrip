@@ -1,25 +1,32 @@
-# MyTrip Dashboard 4.5.3
+# MyTrip Dashboard 4.6.0
 
-This version removes the approved-traveller display filtering that was not working reliably, while keeping independent traveller access controls.
+This version adds a separate travel-journal section for experience notes with the writer’s name.
 
 ## What changed
 
-- Removed the Saved Places / Map list from the Overview page. The full **Places & Map** tab remains available.
-- Removed the large trip-introduction banner.
-- Moved Trip ID, trip name, dates, duration and traveller count into the top header.
-- Moved trip management controls into the **Manage** menu in the top header.
-- Reworked the spending section with clearer Budget, Total Expenses and Balance figures.
-- Improved recent-expense rows with category, date, payer and amount.
-- Traveller accounts show the complete trip member list, including available Traveller IDs.
-- Overview member count and avatars use the complete trip member list.
-- The expense **Paid by** list contains every member in the trip.
-- Administrators can use **Disable for this trip** without changing the traveller’s PIN, profile or other trip assignments.
-- **Manage trip access** can enable or disable any permanent traveller profile for the open trip.
-- The permanent traveller directory labels the separate global action as **Disable everywhere**.
-- Itinerary notes are labeled **Plan / experience note** so admin and travellers can update the visit experience and include it in the printed trip book.
-- Small labels, descriptions, form text and mobile navigation are slightly bolder for easier reading.
+- Added **Trip experience notes** below the day-by-day itinerary.
+- Every experience records its date, optional place, full note and **Written by** name.
+- Admin and travellers can add and edit experience notes.
+- The Administrator can delete an experience note.
+- Itinerary and Complete Trip Book printouts include experience notes and writer names.
+- Planning notes remain inside itinerary items; personal experiences are stored separately so one note does not overwrite another.
+- The complete trip-member list remains visible in traveller views and in the expense **Paid by** list.
+- Independent per-trip traveller enable/disable controls remain available.
 
-## Update GitHub Pages
+## Step 1 — Update the Google backend
+
+The new experience-note feature requires backend **v4.4.0**.
+
+1. Open your existing MyTrip Google Apps Script project.
+2. Open `Code.gs`, select all old code and replace it with `backend/Code.gs` from this package.
+3. Save the Apps Script project.
+4. Select `setupMyTrip` at the top of the Apps Script editor and click **Run** once.
+5. Approve Google permission if requested. This safely creates the new `ExperienceNotes` sheet and adds missing columns without deleting existing trips.
+6. Click **Deploy → Manage deployments**.
+7. Open the existing deployment, choose **New version**, and deploy it with access set to **Anyone**.
+8. Keep using the same `/exec` web-app URL.
+
+## Step 2 — Update GitHub Pages
 
 Upload and replace these four files in the `MyTrip` GitHub repository:
 
@@ -28,8 +35,8 @@ Upload and replace these four files in the `MyTrip` GitHub repository:
 3. `styles.css`
 4. `config.js`
 
-Wait about two minutes and then refresh the page. On a phone, close the old tab and open the dashboard again. On a computer, use `Ctrl+Shift+R` or `Command+Shift+R`.
+Wait about two minutes and refresh the page. On a phone, close the old tab and open the dashboard again. On a computer, use `Ctrl+Shift+R` or `Command+Shift+R`.
 
-## Google backend
+## Check the update
 
-No Google Apps Script update is required when your login screen already shows backend **v4.3.0**. That backend already supports independent per-trip traveller assignments.
+The login page should show **Google backend connected · v4.4.0**. Open a trip, select **Itinerary**, and use **Add experience note**.

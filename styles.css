@@ -184,3 +184,41 @@ button:disabled{cursor:wait;opacity:.65}
   .trip-access-note{font-size:9px}
   .share-banner .banner-actions button{min-height:38px}
 }
+
+/* Version 4.6 · writer-attributed trip experience notes */
+.experience-section{margin-top:18px;padding:17px;border:1px solid #d8e8e3;border-top:5px solid #20a68f;border-radius:15px;background:linear-gradient(145deg,#fff,#f1faf7);box-shadow:0 7px 24px rgba(16,42,67,.06)}
+.experience-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.experience-heading h2{margin:3px 0;color:#102a43;font:700 24px/1.15 "Playfair Display",Georgia,serif}
+.experience-heading p{margin:0;color:#6f7f8d;font-size:10px;font-weight:650}
+.experience-heading .primary{flex:0 0 auto}
+.experience-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.experience-card{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:11px;align-items:start;padding:14px;border:1px solid #d8e8e3;border-radius:12px;background:#fff}
+.experience-date{display:flex;flex-direction:column;align-items:center;padding-right:10px;border-right:1px solid #e4ece9}
+.experience-date small{color:#20a68f;font-size:7px;font-weight:900;letter-spacing:.7px}
+.experience-date b{color:#102a43;font:700 23px/1 "Playfair Display",Georgia,serif}
+.experience-date span{margin-top:2px;color:#83919e;font-size:8px;font-weight:800;text-transform:uppercase}
+.experience-copy{min-width:0}
+.experience-place{display:block;color:#368d83;font-size:8px;font-weight:900;letter-spacing:.3px}
+.experience-copy p{margin:7px 0 9px;color:#34495b;font-size:10px;font-weight:600;line-height:1.6;white-space:pre-wrap}
+.experience-copy strong{display:inline-flex;padding:5px 8px;border-radius:20px;background:#fff2ed;color:#b55243;font-size:8px;font-weight:900}
+.experience-card .record-actions{align-self:start}
+.empty-experiences{grid-column:1/-1;padding:24px;text-align:center;border:1px dashed #9dcfc4;border-radius:11px;background:#f6fcfa}
+.empty-experiences b{color:#102a43;font-size:12px}
+.empty-experiences p{margin:5px 0 0;color:#6c827c;font-size:9px;font-weight:600}
+@media(max-width:900px){.experience-list{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .experience-section{padding:13px}
+  .experience-heading{align-items:stretch;flex-direction:column}
+  .experience-heading .primary{width:100%;min-height:42px}
+  .experience-card{grid-template-columns:42px minmax(0,1fr)}
+  .experience-card .record-actions{grid-column:1/-1;justify-content:flex-end}
+}
+@media print{
+  .print-experiences{margin-top:25px}
+  .print-experiences article{display:grid;grid-template-columns:150px 1fr;gap:18px;border-top:1px solid var(--line);padding:11px 0;break-inside:avoid}
+  .print-experiences time{font-size:9px;font-weight:800}
+  .print-experiences h3{font-size:12px;margin:0 0 4px}
+  .print-experiences p{margin:0 0 5px;color:#536579;font-size:9px;line-height:1.5;white-space:pre-wrap}
+  .print-experiences strong{font-size:8px;color:#b55243}
+  body[data-print=expenses] .print-experiences{display:none}
+}
