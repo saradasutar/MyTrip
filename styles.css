@@ -172,6 +172,12 @@ body{font-weight:500}
 input,select,textarea{font-weight:600}
 .sidebar nav button{font-weight:800}
 .top-trip-copy>small,.view-head p,.permission-banner p,.share-banner p,.stat span,.summary-card span,.timeline-row time,.timeline-row p,.plan-item p,.place p,.person p,.print-card p,.account-card p,.account-card small,.overview-expense small,.spending-total span{font-weight:650}
+
+/* Version 4.6.7 · prominent personal Traveller ID */
+.personal-traveller-id{display:flex;flex:0 0 auto;flex-direction:column;align-items:flex-start;justify-content:center;min-width:145px;padding:8px 13px;border:2px solid #6c54ba;border-radius:10px;background:linear-gradient(135deg,#8268cf,#5f46ae);color:#fff;box-shadow:0 8px 18px rgba(95,70,174,.25);white-space:nowrap}
+.personal-traveller-id small{font-size:8px;font-weight:900;line-height:1;letter-spacing:1px;color:#e9e2ff}
+.personal-traveller-id b{margin-top:4px;color:#fff;font-size:15px;font-weight:900;line-height:1;letter-spacing:1px}
+@media(max-width:600px){.permission-banner .personal-traveller-id{order:3;min-width:0;flex:1 1 100%;align-items:center;padding:8px 11px}.personal-traveller-id small{font-size:8px}.personal-traveller-id b{font-size:16px}.permission-banner.traveller>button{order:4;width:100%}}
 .check-card.inactive{opacity:.7;cursor:pointer;background:#fafafa}
 .trip-access-note{margin:0;padding:10px 12px;border-left:4px solid #8268cf;border-radius:8px;background:#f7f3ff;color:#5f5577;font-size:10px;font-weight:650;line-height:1.55}
 .trip-disable-confirmation{display:grid;gap:13px}

@@ -175,7 +175,7 @@
     $("#sideTripName").textContent = trip.name; $("#sideTripDates").textContent = `${displayDate(trip.startDate, { day: "numeric", month: "short" })}–${displayDate(trip.endDate, { day: "numeric", month: "short", year: "numeric" })}`; $("#sideTripCode").textContent = `TRIP ID · ${trip.tripId}`;
     $("#currentUser").textContent = state.currentUser;
     $("#currentRoleLabel").textContent = isAdmin() ? "Global Administrator" : (state.travellerId ? `Traveller ID: ${state.travellerId}` : "Shared trip access");
-    $("#accessBadge").textContent = isAdmin() ? "ADMINISTRATOR" : "TRAVELLER";
+    $("#accessBadge").textContent = isAdmin() ? "ADMINISTRATOR" : (state.travellerId ? `TRAVELLER · ${state.travellerId}` : "TRAVELLER");
     $("#accessBadge").classList.toggle("traveller", !isAdmin());
     $("#inviteButton").classList.toggle("hidden", !isAdmin());
     $("#allTripsButton").classList.toggle("hidden", !isAdmin() && !state.travellerId);
@@ -194,7 +194,7 @@
 
   function heading(kicker, title, action = "", add = "") { return `<div class="view-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2><p>${action}</p></div>${add && canAdd(add) ? `<button class="primary" data-add="${add}">＋ Add ${add}</button>` : ""}</div>`; }
   function panelHead(kicker, title, tab) { return `<div class="panel-head"><div><span class="kicker">${kicker}</span><h2>${title}</h2></div>${tab ? `<button data-go="${tab}">View all →</button>` : ""}</div>`; }
-  function accessNotice() { const personal = Boolean(state.travellerId); return `<section class="permission-banner ${isAdmin() ? "admin" : "traveller"}"><i>${isAdmin() ? "◆" : "♙"}</i><div><b>${isAdmin() ? "Global Administrator access" : (personal ? `Personal traveller access · ${esc(state.travellerId)}` : "Shared trip access")}</b><p>${isAdmin() ? "Open every trip, assign travellers, edit details, disable access or permanently delete a trip." : "View and edit plans, experience notes, places and expenses for this trip."}</p></div>${isAdmin() ? `<button data-all-trips>All trips</button><button data-security>Security</button>` : (personal ? `<button data-my-trips>My trips</button>` : `<span>SHARED TRIP</span>`)}</section>`; }
+  function accessNotice() { const personal = Boolean(state.travellerId); return `<section class="permission-banner ${isAdmin() ? "admin" : "traveller"}"><i>${isAdmin() ? "◆" : "♙"}</i><div><b>${isAdmin() ? "Global Administrator access" : (personal ? "Personal traveller access" : "Shared trip access")}</b><p>${isAdmin() ? "Open every trip, assign travellers, edit details, disable access or permanently delete a trip." : "View and edit plans, experience notes, places and expenses for this trip."}</p></div>${!isAdmin() && personal ? `<span class="personal-traveller-id"><small>MY TRAVELLER ID</small><b>${esc(state.travellerId)}</b></span>` : ""}${isAdmin() ? `<button data-all-trips>All trips</button><button data-security>Security</button>` : (personal ? `<button data-my-trips>My trips</button>` : `<span>SHARED TRIP</span>`)}</section>`; }
 
   function renderOverview() {
     const budget = Number(state.data.trip.budget || 0), total = spent(), percent = budget ? Math.min(100, Math.round(total / budget * 100)) : 0;
