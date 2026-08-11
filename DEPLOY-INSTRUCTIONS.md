@@ -1,8 +1,8 @@
-# MyTrip Dashboard 4.6.3
+# MyTrip Dashboard 4.6.6
 
 This version adds a separate travel-journal section for experience notes with the writer’s name.
 
-If your Google backend already reports **v4.4.0**, the traveller-wise expense summary and **Remove from trip** control need only the updated frontend files; no further backend change is required.
+This release requires Google backend **v4.5.0** for safe permanent deletion of duplicate traveller profiles. Existing trips and historical expenses are preserved.
 
 ## What changed
 
@@ -11,6 +11,10 @@ If your Google backend already reports **v4.4.0**, the traveller-wise expense su
 - Added a **Traveller-wise expense totals** section showing every trip member’s total paid amount, payment count and percentage of total spending.
 - Added the same traveller-wise totals to Expense and Complete Trip Book printouts.
 - Added a clear Administrator-only **Remove from trip** button to every non-organiser traveller card. It removes only the current trip assignment; the permanent profile, PIN and other trips remain unchanged.
+- Traveller-wise expense summaries now show only people who have recorded a positive payment; travellers with ₹0 paid are hidden from both the dashboard and printout.
+- Administrators can use **Existing traveller** to reuse a saved traveller profile from another trip without changing that person’s PIN or other assignments.
+- Personal travellers get a prominent **My trips** dashboard shortcut showing every active trip assigned to their Traveller ID and personal PIN.
+- Administrators can permanently **Delete profile** from the Traveller Directory when two accounts were created for the same person. Exact Traveller ID confirmation is required; all assignments for that duplicate ID are removed while historical expenses and notes remain.
 - Every experience records its date, optional place, full note and **Written by** name.
 - Admin and travellers can add and edit experience notes.
 - The Administrator can delete an experience note.
@@ -21,7 +25,7 @@ If your Google backend already reports **v4.4.0**, the traveller-wise expense su
 
 ## Step 1 — Update the Google backend
 
-The new experience-note feature requires backend **v4.4.0**.
+The current dashboard requires backend **v4.5.0**. It includes the experience-note and multi-trip features from v4.4 plus safe duplicate-profile deletion.
 
 1. Open your existing MyTrip Google Apps Script project.
 2. Open `Code.gs`, select all old code and replace it with `backend/Code.gs` from this package.
@@ -45,4 +49,4 @@ Wait about two minutes and refresh the page. On a phone, close the old tab and o
 
 ## Check the update
 
-The login page should show **Google backend connected · v4.4.0**. Open a trip and use **Add experience** on the Overview dashboard, or select **Itinerary & Notes** and use **Add experience note**.
+The login page should show **Google backend connected · v4.5.0**. Open **Administrator → All trips → Traveller profiles** to manage or delete a duplicate profile.

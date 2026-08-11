@@ -179,6 +179,8 @@ input,select,textarea{font-weight:600}
 .form-actions .danger-confirm{border-color:#b84a3f;background:#b84a3f;color:#fff}
 .global-profile-control[data-active="true"]{border-color:#e4a49a;background:#fff1ee;color:#a94237}
 .global-profile-control[data-active="false"]{border-color:#9acfc5;background:#eff9f6;color:#168b7b}
+.account-actions .delete-profile-control{border-color:#e6a69d;background:#fff1ee;color:#a94237}
+.account-actions .delete-profile-control:hover{background:#ffe5e0}
 button:disabled{cursor:wait;opacity:.65}
 @media(max-width:760px){
   .trip-access-note{font-size:9px}
