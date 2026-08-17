@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4.6.7">
+  <link rel="stylesheet" href="styles.css?v=4.7.0">
 </head>
 <body>
   <section class="access-screen" id="accessScreen">
-    <div class="access-art"><div class="brand"><i>↗</i> mytrip</div><div class="access-copy"><span>PLAN · SHARE · GO</span><h1>Our family trip.</h1><p>Choose places together, build a day-by-day plan, record experiences, track every rupee and print a clean trip book.</p><div class="feature-chips"><b>⌖ Google Maps</b><b>♙ Shared access</b><b>✍ Experience notes</b><b>₹ Expenses</b><b>▤ Print reports</b></div></div></div>
+    <div class="access-art"><div class="brand"><i>↗</i> mytrip</div><div class="access-copy"><span>PLAN · SHARE · GO</span><h1>One happy place for the whole trip.</h1><p>Choose places together, build a day-by-day plan, record experiences, track every rupee and print a clean trip book.</p><div class="feature-chips"><b>⌖ Google Maps</b><b>♙ Shared access</b><b>✍ Experience notes</b><b>₹ Expenses</b><b>▤ Print reports</b></div></div></div>
     <div class="access-panel">
       <div class="access-card">
         <div class="mobile-logo"><i>↗</i> mytrip</div>
@@ -31,6 +31,7 @@
         <div class="demo-choice"><button class="demo-button" id="adminDemoButton" type="button">Administrator demo</button><button class="demo-button" id="travellerDemoButton" type="button">Traveller demo</button></div>
         <button class="text-button" id="showCreateButton" type="button">＋ Create a new trip</button>
         <div class="backend-status" id="backendStatus"><span><i></i><b>Google backend not connected</b></span><button id="connectBackendButton" type="button">Connect</button></div>
+        <div class="version-strip" aria-label="Application versions"><span>FRONTEND <b id="loginFrontendVersion">v4.7.0</b></span><span>BACKEND <b id="loginBackendVersion">Not connected</b></span></div>
         <p class="access-note">One Administrator PIN opens every trip. Every named traveller can have one personal PIN for all assigned trips.</p>
       </div>
     </div>
@@ -61,13 +62,14 @@
           <span class="hidden" id="crumbLabel">Overview</span>
         </div>
         <div class="top-actions">
+          <span class="version-badge" id="dashboardVersion">Frontend v4.7.0 · Backend —</span>
           <button class="all-trips" id="allTripsButton">◆ All trips</button>
           <span class="access-badge" id="accessBadge">ADMINISTRATOR</span>
           <div class="avatars" id="topAvatars"></div>
           <button class="invite" id="inviteButton">＋ Invite</button>
           <details class="trip-tools top-trip-tools">
             <summary aria-label="Manage trip">••• <span>Manage</span></summary>
-            <div class="trip-tools-menu"><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary status-control" id="tripStatusButton">Disable trip</button><button class="secondary" id="syncButton">↻ Refresh data</button><button class="danger-button" id="deleteTripButton">Delete trip</button></div>
+            <div class="trip-tools-menu"><button class="secondary" id="editTripButton">✎ Edit trip</button><button class="secondary" id="tripPhotoButton">▣ Trip photo</button><button class="secondary status-control" id="tripStatusButton">Disable trip</button><button class="secondary" id="syncButton">↻ Refresh data</button><button class="danger-button" id="deleteTripButton">Delete trip</button></div>
           </details>
         </div>
       </header>
@@ -81,7 +83,7 @@
   <div class="toast hidden" id="toast" role="status"></div>
   <section class="print-area" id="printArea"></section>
 
-  <script src="config.js?v=4.6.7"></script>
-  <script src="app.js?v=4.6.7"></script>
+  <script src="config.js?v=4.7.0"></script>
+  <script src="app.js?v=4.7.0"></script>
 </body>
 </html>

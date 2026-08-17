@@ -1,52 +1,54 @@
-# MyTrip Dashboard 4.6.6
+# MyTrip Dashboard 4.7.0
 
-This version adds a separate travel-journal section for experience notes with the writer’s name.
+This release shows the frontend and backend versions, adds Administrator-controlled feature access for each personal Traveller ID, and adds trip cover photos.
 
-This release requires Google backend **v4.5.0** for safe permanent deletion of duplicate traveller profiles. Existing trips and historical expenses are preserved.
+The dashboard requires Google backend **v4.6.0**. Existing trips, travellers, plans, places, expenses and experience notes are preserved.
 
 ## What changed
 
-- Added **Trip experience notes** below the day-by-day itinerary.
-- Added a prominent **Add experience** shortcut on the Overview dashboard and renamed the navigation item **Itinerary & Notes** so the journal is easy to find.
-- Added a **Traveller-wise expense totals** section showing every trip member’s total paid amount, payment count and percentage of total spending.
-- Added the same traveller-wise totals to Expense and Complete Trip Book printouts.
-- Added a clear Administrator-only **Remove from trip** button to every non-organiser traveller card. It removes only the current trip assignment; the permanent profile, PIN and other trips remain unchanged.
-- Traveller-wise expense summaries now show only people who have recorded a positive payment; travellers with ₹0 paid are hidden from both the dashboard and printout.
-- Administrators can use **Existing traveller** to reuse a saved traveller profile from another trip without changing that person’s PIN or other assignments.
-- Personal travellers get a prominent **My trips** dashboard shortcut showing every active trip assigned to their Traveller ID and personal PIN.
-- Administrators can permanently **Delete profile** from the Traveller Directory when two accounts were created for the same person. Exact Traveller ID confirmation is required; all assignments for that duplicate ID are removed while historical expenses and notes remain.
-- Every experience records its date, optional place, full note and **Written by** name.
-- Admin and travellers can add and edit experience notes.
-- The Administrator can delete an experience note.
-- Itinerary and Complete Trip Book printouts include experience notes and writer names.
-- Planning notes remain inside itinerary items; personal experiences are stored separately so one note does not overwrite another.
-- The complete trip-member list remains visible in traveller views and in the expense **Paid by** list.
-- Independent per-trip traveller enable/disable controls remain available.
+- The login page and trip dashboard both show the frontend and connected backend versions.
+- In **Travellers**, the Administrator can open **Control access** for a named traveller and independently allow or hide:
+  - Itinerary
+  - Experience notes
+  - Places & Map
+  - Expenses
+  - Traveller list
+  - Print & Export
+- Hidden records are withheld by the Google backend, not merely hidden with page styling.
+- These controls apply to personal Traveller ID login for that one trip. The shared trip PIN remains common because it does not identify an individual traveller.
+- The Administrator can add, change or remove a trip cover photo from the Overview or **Manage → Trip photo**.
+- JPEG, PNG and WebP files up to 3 MB can be uploaded from a phone or computer and stored in the deploying Administrator's Google Drive.
+- A public HTTPS image link can be used instead of uploading a file.
+- The cover photo is included in the printable trip book.
+- Existing experience notes, traveller-wise expense totals, multi-trip personal Traveller IDs, PIN management and duplicate-profile deletion remain available.
 
 ## Step 1 — Update the Google backend
 
-The current dashboard requires backend **v4.5.0**. It includes the experience-note and multi-trip features from v4.4 plus safe duplicate-profile deletion.
-
-1. Open your existing MyTrip Google Apps Script project.
+1. Open the existing MyTrip Google Apps Script project.
 2. Open `Code.gs`, select all old code and replace it with `backend/Code.gs` from this package.
 3. Save the Apps Script project.
-4. Select `setupMyTrip` at the top of the Apps Script editor and click **Run** once.
-5. Approve Google permission if requested. This safely creates the new `ExperienceNotes` sheet and adds missing columns without deleting existing trips.
-6. Click **Deploy → Manage deployments**.
-7. Open the existing deployment, choose **New version**, and deploy it with access set to **Anyone**.
-8. Keep using the same `/exec` web-app URL.
+4. Select `setupMyTrip` and click **Run** once.
+5. Approve the requested Google permissions. Google Drive permission is needed only to upload trip photos.
+6. Wait for `setupMyTrip` to finish. It safely adds the new photo and feature-access columns without deleting existing data.
+7. Click **Deploy → Manage deployments**.
+8. Edit the existing deployment, select **New version**, and deploy with access set to **Anyone**.
+9. Keep using the same `/exec` web-app URL.
 
 ## Step 2 — Update GitHub Pages
 
-Upload and replace these four files in the `MyTrip` GitHub repository:
+Replace these files in the `MyTrip` GitHub repository:
 
 1. `index.html`
 2. `app.js`
 3. `styles.css`
 4. `config.js`
 
-Wait about two minutes and refresh the page. On a phone, close the old tab and open the dashboard again. On a computer, use `Ctrl+Shift+R` or `Command+Shift+R`.
+Wait about two minutes, then use a hard refresh. On a phone, close the old tab and reopen the dashboard.
 
 ## Check the update
 
-The login page should show **Google backend connected · v4.5.0**. Open **Administrator → All trips → Traveller profiles** to manage or delete a duplicate profile.
+1. The login page should show **Frontend v4.7.0** and **Backend v4.6.0**.
+2. Log in as Administrator and open a trip.
+3. Open **Travellers → Control access** on a traveller with a personal Traveller ID.
+4. Hide one feature, save, then log in using that Traveller ID and personal PIN. The menu and backend data for that feature should be absent.
+5. Open **Manage → Trip photo**, upload a photo, and confirm it appears at the top of Overview.
